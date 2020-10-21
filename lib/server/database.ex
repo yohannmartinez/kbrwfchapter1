@@ -23,4 +23,12 @@ defmodule KbrwFormation.Database do
       :ets.insert(:wrapper, {key, value})
     end
 
+    def delete(key) do
+      :ets.delete(:wrapper, key)
+    end
+
+    def update(key, value) do
+      :ets.update_element(:wrapper, key, {2, value})
+    end
+
 end
