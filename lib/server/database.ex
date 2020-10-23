@@ -31,14 +31,23 @@ defmodule KbrwFormation.Database do
     :ets.update_element(:wrapper, key, {2, value})
   end
 
-  def search(filter_elements) do
+  def search(filters) do
     orders_data = :ets.tab2list(:wrapper)
 
-    orders_list = Enum.map(orders_data, fn(order)->
-      elem(order,0)
-    end)
+    Enum.filter(orders_data, fn {_key, map} ->
+      checkOrder(filters, map)
+    end
+    )
 
-    #goal is to filter orders_list with filter_elements
+  end
+
+  defp checkOrder(filters, map) do
+    check = Enum.filter(filters, fn(filter) ->
+      Map.has_key?(map, elem(filter,0)) and map[elem(filter,0)] == elem(filter,1)
+    end
+    )
+
+    Enum.count(check) == Enum.count(filters)
   end
 
 end
