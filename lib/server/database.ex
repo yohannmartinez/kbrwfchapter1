@@ -20,7 +20,7 @@ defmodule KbrwFormation.Database do
   def get(key) do
     case :ets.lookup(:wrapper, key) do
       [] ->
-        nil
+        {}
 
       [{key, value}] ->
         {key, value}
