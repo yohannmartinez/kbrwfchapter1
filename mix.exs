@@ -14,7 +14,10 @@ defmodule KbrwFormation.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [mod: {KbrwFormation, []}, extra_applications: [:logger]]
+    [
+      applications: [:logger, :cowboy, :plug],
+      mod: {KbrwFormation, []}
+    ]
   end
 
   # Dependencies can be Hex packages:
@@ -27,6 +30,10 @@ defmodule KbrwFormation.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:poison, "~> 3.1"}]
+    [
+      {:poison, "~> 3.1"},
+      {:cowboy, "~> 1.1.2"},
+      {:plug, "~> 1.3.4"},
+    ]
   end
 end

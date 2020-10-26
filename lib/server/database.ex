@@ -1,13 +1,21 @@
 defmodule KbrwFormation.Database do
   use GenServer
 
-  def init do
-    {:ok, []}
+  def start_link do
+    GenServer.start_link(__MODULE__, :ok , name: __MODULE__)
+  end
+  def init(arg) do
+    :ets.new(:wrapper, [
+      :set,
+      :public,
+      :named_table,
+      {:read_concurrency, true},
+      {:write_concurrency, true}
+    ])
+    {:ok, arg}
   end
 
-  def start_link do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
-  end
+
 
   def get(key) do
     case :ets.lookup(:wrapper, key) do
@@ -36,18 +44,15 @@ defmodule KbrwFormation.Database do
 
     Enum.filter(orders_data, fn {_key, map} ->
       checkOrder(filters, map)
-    end
-    )
-
+    end)
   end
 
   defp checkOrder(filters, map) do
-    check = Enum.filter(filters, fn(filter) ->
-      Map.has_key?(map, elem(filter,0)) and map[elem(filter,0)] == elem(filter,1)
-    end
-    )
+    check =
+      Enum.filter(filters, fn filter ->
+        Map.has_key?(map, elem(filter, 0)) and map[elem(filter, 0)] == elem(filter, 1)
+      end)
 
     Enum.count(check) == Enum.count(filters)
   end
-
 end
