@@ -44,7 +44,9 @@ defmodule KbrwFormation.Database do
 
     Enum.filter(orders_data, fn {_key, map} ->
       checkOrder(filters, map)
-    end)
+    end
+    )
+
   end
 
   defp checkOrder(filters, map) do
