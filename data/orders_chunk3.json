@@ -8,5 +8,9 @@
         "id": "nat_order000147814",
         "remoteid": "000147814",
         "type": "nat_order"
+    },{
+        "id": "nat_order000147813",
+        "remoteid": "000147813",
+        "type": "nat_ordered"
     }
 ]

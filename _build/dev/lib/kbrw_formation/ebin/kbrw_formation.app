@@ -1,0 +1,11 @@
+{application,kbrw_formation,
+             [{applications,[kernel,stdlib,elixir,logger,cowboy,plug]},
+              {description,"kbrw_formation"},
+              {modules,['Elixir.JsonLoader','Elixir.KbrwFormation',
+                        'Elixir.KbrwFormation.Database',
+                        'Elixir.KbrwFormation.Database 2',
+                        'Elixir.KbrwFormation.Router',
+                        'Elixir.KbrwFormation.Supervisor']},
+              {registered,[]},
+              {vsn,"0.1.0"},
+              {mod,{'Elixir.KbrwFormation',[]}}]}.

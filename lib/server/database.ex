@@ -2,8 +2,9 @@ defmodule KbrwFormation.Database do
   use GenServer
 
   def start_link do
-    GenServer.start_link(__MODULE__, :ok , name: __MODULE__)
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
+
   def init(arg) do
     :ets.new(:wrapper, [
       :set,
@@ -12,10 +13,9 @@ defmodule KbrwFormation.Database do
       {:read_concurrency, true},
       {:write_concurrency, true}
     ])
+
     {:ok, arg}
   end
-
-
 
   def get(key) do
     case :ets.lookup(:wrapper, key) do
@@ -41,9 +41,10 @@ defmodule KbrwFormation.Database do
 
   def search(filters) do
     orders_data = :ets.tab2list(:wrapper)
-
-    Enum.filter(orders_data, fn {_key, map} ->
-      checkOrder(filters, map)
+    orders_toMap = Enum.map(orders_data, fn {key, map} -> %{"id" => key, "order" => map} end)
+    IO.inspect(orders_toMap)
+    Enum.filter(orders_toMap, fn (order) ->
+      checkOrder(filters, order["order"])
     end
     )
 

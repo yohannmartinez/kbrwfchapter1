@@ -31,7 +31,6 @@ defmodule KbrwFormation.Router do
     params = Map.to_list(conn.params)
     results = Database.search(params)
     IO.inspect(results)
-    results = Enum.map(results, fn(result) -> Tuple.to_list(result) end)
     send_resp(conn, 200, Poison.encode!(results))
   end
 
