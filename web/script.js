@@ -1,3 +1,3 @@
 let test = () => {
-    console.log(<h1>coucou</h1>)
+    console.log("coucou")
 }

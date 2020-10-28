@@ -68,11 +68,7 @@
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-
-
-var test = function test() {
-    console.log('coucou');
-};
+eval("\n\nvar test = function test() {\n    console.log(\"coucou\");\n};//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiMC5qcyIsInNvdXJjZXMiOlsid2VicGFjazovLy9zY3JpcHQuanM/OWE5NSJdLCJzb3VyY2VzQ29udGVudCI6WyJsZXQgdGVzdCA9ICgpID0+IHtcbiAgICBjb25zb2xlLmxvZyhcImNvdWNvdVwiKVxufVxuXG5cbi8vIFdFQlBBQ0sgRk9PVEVSIC8vXG4vLyBzY3JpcHQuanMiXSwibWFwcGluZ3MiOiI7O0FBQUE7QUFDQTtBQUNBIiwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///0\n");
 
 /***/ })
 /******/ ]);
