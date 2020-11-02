@@ -14,20 +14,22 @@ var orders = [
   { remoteid: "000000192", custom: { customer: { full_name: "Lucky Luke" }, billing_address: "A Cowboy doesn't have an address. Sorry" }, items: 0 },
 ]
 
+var orders = orders.map(order => (<JSXZ in="orders" sel=".table-line">
+  <Z sel=".table-col1">{order.remoteid}</Z>
+  <Z sel=".table-col2">{order.custom.customer.full_name}</Z>
+  <Z sel=".table-col3">{order.custom.billing_address}</Z>
+  <Z sel=".table-col4">{order.items}</Z>
+  <Z sel=".table-col5">{"->"}</Z>
+  <Z sel=".table-col6">pay</Z>
+</JSXZ>))
+
 var Page = createReactClass({
-  render() {
-    return <JSXZ in="orders" sel=".container">
-      {
-        orders.map(order => (<JSXZ in="orders" sel=".table-line">
-          <Z sel=".table-col1">{order.remoteid}</Z>
-          <Z sel=".table-col2">{order.custom.customer.full_name}</Z>
-          <Z sel=".table-col3">{order.custom.billing_address}</Z>
-          <Z sel=".table-col4">{order.items}</Z>
-          <Z sel=".table-col5">{"->"}</Z>
-          <Z sel=".table-col6">pay</Z>
-        </JSXZ>))
-      }
-    </JSXZ>
+  render: function () {
+    return (
+      <JSXZ in="orders" sel=".container">
+        <Z sel=".table-body">{orders}</Z>
+      </JSXZ>
+    )
   }
 })
 
