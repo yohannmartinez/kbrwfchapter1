@@ -5,7 +5,8 @@
                         'Elixir.KbrwFormation.Database',
                         'Elixir.KbrwFormation.Database 2',
                         'Elixir.KbrwFormation.Router',
-                        'Elixir.KbrwFormation.Supervisor']},
+                        'Elixir.KbrwFormation.Supervisor',
+                        'Elixir.Server.TheCreator']},
               {registered,[]},
               {vsn,"0.1.0"},
               {mod,{'Elixir.KbrwFormation',[]}}]}.
