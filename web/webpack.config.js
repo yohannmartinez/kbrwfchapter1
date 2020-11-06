@@ -25,7 +25,7 @@ module.exports = {
               dir: 'tuto.webflow'
             }
           ]],
-          plugins: ['./my-babel-plugin']
+          plugins: ['./my-babel-plugin',"transform-object-rest-spread"]
         }
       }, {
         test: /\.css$/,

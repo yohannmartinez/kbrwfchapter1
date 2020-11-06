@@ -17,14 +17,20 @@ defmodule KbrwFormation.Database do
     {:ok, arg}
   end
 
+
   def get(key) do
     case :ets.lookup(:wrapper, key) do
       [] ->
-        {}
+        []
 
       [{key, value}] ->
-        {key, value}
+        value
     end
+  end
+
+  def getAll do
+    orders = :ets.tab2list(:wrapper)
+    Enum.map(orders, fn {_key, value} -> value end)
   end
 
   def put(key, value) do

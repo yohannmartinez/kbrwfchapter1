@@ -60,11 +60,20 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 10);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+module.exports = function() {
+	throw new Error("define cannot be used indirect");
+};
+
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -254,7 +263,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -351,21 +360,6 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(process) {
-
-if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(10);
-} else {
-  module.exports = __webpack_require__(11);
-}
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
-
-/***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -373,176 +367,631 @@ if (process.env.NODE_ENV === 'production') {
 /* WEBPACK VAR INJECTION */(function(process) {
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(12);
+  module.exports = __webpack_require__(16);
 } else {
-  module.exports = __webpack_require__(13);
+  module.exports = __webpack_require__(17);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
+/* WEBPACK VAR INJECTION */(function(process) {var __WEBPACK_AMD_DEFINE_RESULT__;var require;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+/*global process,document,setTimeout,clearTimeout,MutationObserver,WebKitMutationObserver*/
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function(require) {
+	/*jshint maxcomplexity:6*/
+
+	// Sniff "best" async scheduling option
+	// Prefer process.nextTick or MutationObserver, then check for
+	// setTimeout, and finally vertx, since its the only env that doesn't
+	// have setTimeout
+
+	var MutationObs;
+	var capturedSetTimeout = typeof setTimeout !== 'undefined' && setTimeout;
+
+	// Default env
+	var setTimer = function(f, ms) { return setTimeout(f, ms); };
+	var clearTimer = function(t) { return clearTimeout(t); };
+	var asap = function (f) { return capturedSetTimeout(f, 0); };
+
+	// Detect specific env
+	if (isNode()) { // Node
+		asap = function (f) { return process.nextTick(f); };
+
+	} else if (MutationObs = hasMutationObserver()) { // Modern browser
+		asap = initMutationObserver(MutationObs);
+
+	} else if (!capturedSetTimeout) { // vert.x
+		var vertxRequire = require;
+		var vertx = __webpack_require__(31);
+		setTimer = function (f, ms) { return vertx.setTimer(ms, f); };
+		clearTimer = vertx.cancelTimer;
+		asap = vertx.runOnLoop || vertx.runOnContext;
+	}
+
+	return {
+		setTimer: setTimer,
+		clearTimer: clearTimer,
+		asap: asap
+	};
+
+	function isNode () {
+		return typeof process !== 'undefined' &&
+			Object.prototype.toString.call(process) === '[object process]';
+	}
+
+	function hasMutationObserver () {
+	    return (typeof MutationObserver !== 'undefined' && MutationObserver) ||
+			(typeof WebKitMutationObserver !== 'undefined' && WebKitMutationObserver);
+	}
+
+	function initMutationObserver(MutationObserver) {
+		var scheduled;
+		var node = document.createTextNode('');
+		var o = new MutationObserver(run);
+		o.observe(node, { characterData: true });
+
+		function run() {
+			var f = scheduled;
+			scheduled = void 0;
+			f();
+		}
+
+		var i = 0;
+		return function (f) {
+			scheduled = f;
+			node.data = (i ^= 1);
+		};
+	}
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process) {
+
+if (process.env.NODE_ENV === 'production') {
+  module.exports = __webpack_require__(18);
+} else {
+  module.exports = __webpack_require__(19);
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+// Load modules
+
+
+// Declare internals
+
+var internals = {};
+
+
+exports.arrayToObject = function (source) {
+
+    var obj = {};
+    for (var i = 0, il = source.length; i < il; ++i) {
+        if (typeof source[i] !== 'undefined') {
+
+            obj[i] = source[i];
+        }
+    }
+
+    return obj;
+};
+
+
+exports.merge = function (target, source) {
+
+    if (!source) {
+        return target;
+    }
+
+    if (typeof source !== 'object') {
+        if (Array.isArray(target)) {
+            target.push(source);
+        }
+        else {
+            target[source] = true;
+        }
+
+        return target;
+    }
+
+    if (typeof target !== 'object') {
+        target = [target].concat(source);
+        return target;
+    }
+
+    if (Array.isArray(target) &&
+        !Array.isArray(source)) {
+
+        target = exports.arrayToObject(target);
+    }
+
+    var keys = Object.keys(source);
+    for (var k = 0, kl = keys.length; k < kl; ++k) {
+        var key = keys[k];
+        var value = source[key];
+
+        if (!target[key]) {
+            target[key] = value;
+        }
+        else {
+            target[key] = exports.merge(target[key], value);
+        }
+    }
+
+    return target;
+};
+
+
+exports.decode = function (str) {
+
+    try {
+        return decodeURIComponent(str.replace(/\+/g, ' '));
+    } catch (e) {
+        return str;
+    }
+};
+
+
+exports.compact = function (obj, refs) {
+
+    if (typeof obj !== 'object' ||
+        obj === null) {
+
+        return obj;
+    }
+
+    refs = refs || [];
+    var lookup = refs.indexOf(obj);
+    if (lookup !== -1) {
+        return refs[lookup];
+    }
+
+    refs.push(obj);
+
+    if (Array.isArray(obj)) {
+        var compacted = [];
+
+        for (var i = 0, il = obj.length; i < il; ++i) {
+            if (typeof obj[i] !== 'undefined') {
+                compacted.push(obj[i]);
+            }
+        }
+
+        return compacted;
+    }
+
+    var keys = Object.keys(obj);
+    for (i = 0, il = keys.length; i < il; ++i) {
+        var key = keys[i];
+        obj[key] = exports.compact(obj[key], refs);
+    }
+
+    return obj;
+};
+
+
+exports.isRegExp = function (obj) {
+    return Object.prototype.toString.call(obj) === '[object RegExp]';
+};
+
+
+exports.isBuffer = function (obj) {
+
+    if (obj === null ||
+        typeof obj === 'undefined') {
+
+        return false;
+    }
+
+    return !!(obj.constructor &&
+        obj.constructor.isBuffer &&
+        obj.constructor.isBuffer(obj));
+};
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	/**
+	 * Custom error type for promises rejected by promise.timeout
+	 * @param {string} message
+	 * @constructor
+	 */
+	function TimeoutError (message) {
+		Error.call(this);
+		this.message = message;
+		this.name = TimeoutError.name;
+		if (typeof Error.captureStackTrace === 'function') {
+			Error.captureStackTrace(this, TimeoutError);
+		}
+	}
+
+	TimeoutError.prototype = Object.create(Error.prototype);
+	TimeoutError.prototype.constructor = TimeoutError;
+
+	return TimeoutError;
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	return {
+		pending: toPendingState,
+		fulfilled: toFulfilledState,
+		rejected: toRejectedState,
+		inspect: inspect
+	};
+
+	function toPendingState() {
+		return { state: 'pending' };
+	}
+
+	function toRejectedState(e) {
+		return { state: 'rejected', reason: e };
+	}
+
+	function toFulfilledState(x) {
+		return { state: 'fulfilled', value: x };
+	}
+
+	function inspect(handler) {
+		var state = handler.state();
+		return state === 0 ? toPendingState()
+			 : state > 0   ? toFulfilledState(handler.value)
+			               : toRejectedState(handler.value);
+	}
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	makeApply.tryCatchResolve = tryCatchResolve;
+
+	return makeApply;
+
+	function makeApply(Promise, call) {
+		if(arguments.length < 2) {
+			call = tryCatchResolve;
+		}
+
+		return apply;
+
+		function apply(f, thisArg, args) {
+			var p = Promise._defer();
+			var l = args.length;
+			var params = new Array(l);
+			callAndResolve({ f:f, thisArg:thisArg, args:args, params:params, i:l-1, call:call }, p._handler);
+
+			return p;
+		}
+
+		function callAndResolve(c, h) {
+			if(c.i < 0) {
+				return call(c.f, c.thisArg, c.params, h);
+			}
+
+			var handler = Promise._handler(c.args[c.i]);
+			handler.fold(callAndResolveNext, c, void 0, h);
+		}
+
+		function callAndResolveNext(c, x, h) {
+			c.params[c.i] = x;
+			c.i -= 1;
+			callAndResolve(c, h);
+		}
+	}
+
+	function tryCatchResolve(f, thisArg, args, resolver) {
+		try {
+			resolver.resolve(f.apply(thisArg, args));
+		} catch(e) {
+			resolver.reject(e);
+		}
+	}
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
 
-__webpack_require__(5);
-__webpack_require__(6);
-__webpack_require__(7);
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
+
+__webpack_require__(11);
+__webpack_require__(12);
+__webpack_require__(13);
 
 /* required library for our React app */
-var ReactDOM = __webpack_require__(8);
-var React = __webpack_require__(2);
-var createReactClass = __webpack_require__(18);
+var ReactDOM = __webpack_require__(14);
+var React = __webpack_require__(3);
+var Qs = __webpack_require__(24);
+var Cookie = __webpack_require__(28);
+var When = __webpack_require__(29);
+var XMLHttpRequest = __webpack_require__(44);
+var createReactClass = __webpack_require__(45);
 
 var orders = [{ remoteid: "000000189", custom: { customer: { full_name: "TOTO & CIE" }, billing_address: "Some where in the world" }, items: 2 }, { remoteid: "000000190", custom: { customer: { full_name: "Looney Toons" }, billing_address: "The Warner Bros Company" }, items: 3 }, { remoteid: "000000191", custom: { customer: { full_name: "Asterix & Obelix" }, billing_address: "Armorique" }, items: 29 }, { remoteid: "000000192", custom: { customer: { full_name: "Lucky Luke" }, billing_address: "A Cowboy doesn't have an address. Sorry" }, items: 0 }];
 
-var orders = orders.map(function (order) {
-  return React.createElement(
-    'div',
-    {
-      className: 'table-line'
-    },
-    React.createElement(
+var Layout = createReactClass({
+  displayName: 'Layout',
+
+  getInitialState: function getInitialState() {
+    return { modal: this.props.modal };
+  },
+
+  modal: function modal(modal_data) {
+    var _this = this;
+
+    this.setState({
+      modal: _extends({}, modal_data, { callback: function callback(res) {
+          _this.setState({ modal: null }, function () {
+            if (modal_data.callback) modal_data.callback(res);
+          });
+        }
+      })
+    });
+  },
+  render: function render() {
+    var modal_component = {
+      'delete': function _delete(props) {
+        return React.createElement(DeleteModal, props);
+      }
+    }[this.state.modal && this.state.modal.type];
+    modal_component = modal_component && modal_component(this.state.modal);
+
+    var props = _extends({}, this.props, { modal: this.modal
+    });
+
+    var cn = function cn() {
+      var args = arguments,
+          classes = {};
+      for (var i in args) {
+        var arg = args[i];
+        if (!arg) continue;
+        if ('string' === typeof arg || 'number' === typeof arg) {
+          arg.split(" ").filter(function (c) {
+            return c != "";
+          }).map(function (c) {
+            classes[c] = true;
+          });
+        } else if ('object' === (typeof arg === 'undefined' ? 'undefined' : _typeof(arg))) {
+          for (var key in arg) {
+            classes[key] = arg[key];
+          }
+        }
+      }
+      return Object.keys(classes).map(function (k) {
+        return classes[k] && k || '';
+      }).join(' ');
+    };
+
+    return React.createElement(
       'div',
       {
-        className: 'table-col1'
-      },
-      order.remoteid
-    ),
-    React.createElement(
-      'div',
-      {
-        className: 'table-col2'
-      },
-      order.custom.customer.full_name
-    ),
-    React.createElement(
-      'div',
-      {
-        className: 'table-col3'
-      },
-      order.custom.billing_address
-    ),
-    React.createElement(
-      'div',
-      {
-        className: 'table-col4'
-      },
-      order.items
-    ),
-    React.createElement(
-      'div',
-      {
-        className: 'table-col5'
-      },
-      "->"
-    ),
-    React.createElement(
-      'div',
-      {
-        className: 'table-col6'
-      },
-      'pay'
-    )
-  );
+        className: 'layout',
+        onClick: function onClick() {
+          console.log(modal_component);
+        } },
+      React.createElement(
+        'div',
+        { className: cn('modal-wrapper', { 'hidden': !modal_component }) },
+        modal_component
+      ),
+      React.createElement(
+        'div',
+        {
+          className: 'layout-container'
+        },
+        React.createElement(Search, this.props),
+        React.createElement(Header, props),
+        React.createElement(Bottom, this.props)
+      )
+    );
+  }
 });
 
-var Page = createReactClass({
-  displayName: 'Page',
+var DeleteModal = createReactClass({
+  displayName: 'DeleteModal',
+  render: function render() {
+    var _this2 = this;
 
+    console.log("i am the delete modal and my props are", this.props);
+    return React.createElement(
+      'div',
+      {
+        className: 'modal-wrapper'
+      },
+      React.createElement(
+        'div',
+        {
+          className: 'modal-content'
+        },
+        React.createElement(
+          'h1',
+          {
+            className: 'modal-text'
+          },
+          this.props.message
+        ),
+        React.createElement(
+          'a',
+          {
+            href: '#',
+            className: 'modal-button modal-confirm-button w-button',
+            onClick: function onClick() {
+              _this2.props.callback(true);
+            } },
+          'yes delete it !'
+        ),
+        React.createElement(
+          'a',
+          {
+            href: '#',
+            className: 'modal-button modal-cancel-button w-button',
+            onClick: function onClick() {
+              _this2.props.callback(false);
+            } },
+          'no, go back'
+        )
+      )
+    );
+  }
+});
+
+var Search = createReactClass({
+  displayName: 'Search',
   render: function render() {
     return React.createElement(
       'div',
       {
-        className: 'container'
+        className: 'div-global-search w-form'
+      },
+      React.createElement(
+        'form',
+        {
+          id: 'email-form',
+          name: 'email-form',
+          'data-name': 'Email Form',
+          className: 'form div-search'
+        },
+        React.createElement('input', {
+          type: 'text',
+          className: 'text-field search-input w-input',
+          maxLength: 256,
+          name: 'Search',
+          'data-name': 'Search',
+          placeholder: 'Search an order',
+          id: 'Search',
+          required: ''
+        }),
+        React.createElement('input', {
+          type: 'submit',
+          defaultValue: 'Search',
+          'data-wait': 'Please wait...',
+          className: 'submit-button search-button w-button'
+        })
+      ),
+      React.createElement(
+        'div',
+        {
+          className: 'w-form-done'
+        },
+        React.createElement(
+          'div',
+          null,
+          'Thank you! Your submission has been received!'
+        )
+      ),
+      React.createElement(
+        'div',
+        {
+          className: 'w-form-fail'
+        },
+        React.createElement(
+          'div',
+          null,
+          'Oops! Something went wrong while submitting the form.'
+        )
+      )
+    );
+  }
+});
+
+var Header = createReactClass({
+  displayName: 'Header',
+  render: function render() {
+    return React.createElement(
+      'div',
+      {
+        className: 'header'
       },
       React.createElement(
         'div',
         {
-          className: 'div-block-3'
+          className: 'header-container'
         },
         React.createElement(
-          'div',
+          'h1',
           {
-            className: 'div-block-4'
+            className: 'heading'
           },
           React.createElement(
-            'h1',
+            'strong',
             {
-              className: 'heading'
+              className: 'bold-text'
+            },
+            'Orders '
+          ),
+          React.createElement(
+            'span',
+            {
+              className: 'text-span'
             },
             React.createElement(
               'strong',
-              {
-                className: 'bold-text'
-              },
-              'Orders '
-            ),
-            React.createElement(
-              'span',
-              {
-                className: 'text-span'
-              },
-              React.createElement(
-                'strong',
-                null,
-                '\uF002'
-              )
-            )
-          )
-        ),
-        React.createElement(
-          'div',
-          {
-            className: 'w-form'
-          },
-          React.createElement(
-            'form',
-            {
-              id: 'email-form',
-              name: 'email-form',
-              'data-name': 'Email Form',
-              className: 'form'
-            },
-            React.createElement('input', {
-              type: 'text',
-              className: 'text-field w-input',
-              maxLength: 256,
-              name: 'Search',
-              'data-name': 'Search',
-              placeholder: 'Search an order',
-              id: 'Search',
-              required: ''
-            }),
-            React.createElement('input', {
-              type: 'submit',
-              defaultValue: 'Search',
-              'data-wait': 'Please wait...',
-              className: 'submit-button w-button'
-            })
-          ),
-          React.createElement(
-            'div',
-            {
-              className: 'w-form-done'
-            },
-            React.createElement(
-              'div',
               null,
-              'Thank you! Your submission has been received!'
-            )
-          ),
-          React.createElement(
-            'div',
-            {
-              className: 'w-form-fail'
-            },
-            React.createElement(
-              'div',
-              null,
-              'Oops! Something went wrong while submitting the form.'
+              '\uF002'
             )
           )
         )
@@ -550,110 +999,26 @@ var Page = createReactClass({
       React.createElement(
         'div',
         {
-          className: 'div-block-7'
+          className: 'orders'
         },
-        React.createElement(
-          'div',
-          {
-            className: 'table'
-          },
-          React.createElement(
-            'div',
-            {
-              className: 'table-header'
-            },
-            React.createElement(
-              'div',
-              {
-                className: 'header-col'
-              },
-              React.createElement(
-                'div',
-                {
-                  className: 'text-block-4'
-                },
-                'command number'
-              )
-            ),
-            React.createElement(
-              'div',
-              {
-                className: 'header-col'
-              },
-              React.createElement(
-                'div',
-                {
-                  className: 'text-block-4'
-                },
-                'customer'
-              )
-            ),
-            React.createElement(
-              'div',
-              {
-                className: 'header-col'
-              },
-              React.createElement(
-                'div',
-                {
-                  className: 'text-block-4'
-                },
-                'address'
-              )
-            ),
-            React.createElement(
-              'div',
-              {
-                className: 'header-col'
-              },
-              React.createElement(
-                'div',
-                {
-                  className: 'text-block-4'
-                },
-                'quantity'
-              )
-            ),
-            React.createElement(
-              'div',
-              {
-                className: 'header-col'
-              },
-              React.createElement(
-                'div',
-                {
-                  className: 'text-block-4'
-                },
-                'details'
-              )
-            ),
-            React.createElement(
-              'div',
-              {
-                className: 'header-col'
-              },
-              React.createElement(
-                'div',
-                {
-                  className: 'text-block-4'
-                },
-                'pay'
-              )
-            )
-          ),
-          React.createElement(
-            'div',
-            {
-              className: 'table-body'
-            },
-            orders
-          )
-        )
-      ),
+        React.createElement(Orders, this.props)
+      )
+    );
+  }
+});
+
+var Bottom = createReactClass({
+  displayName: 'Bottom',
+  render: function render() {
+    return React.createElement(
+      'div',
+      {
+        className: 'div-global-button'
+      },
       React.createElement(
         'div',
         {
-          className: 'div-block-2'
+          className: 'div-bottom'
         },
         React.createElement(
           'div',
@@ -673,13 +1038,491 @@ var Page = createReactClass({
   }
 });
 
-ReactDOM.render(React.createElement(Page, null), document.getElementById('root'));
+var LayoutOrder = createReactClass({
+  displayName: 'LayoutOrder',
+  render: function render() {
+    return React.createElement(
+      'div',
+      {
+        className: 'div-block layout'
+      },
+      React.createElement(
+        'div',
+        {
+          className: 'div-block-7 layout-container'
+        },
+        React.createElement(Order, this.props)
+      )
+    );
+  }
+});
+
+var Child = createReactClass({
+  displayName: 'Child',
+  render: function render() {
+    var _props$handlerPath = _toArray(this.props.handlerPath),
+        ChildHandler = _props$handlerPath[0],
+        rest = _props$handlerPath.slice(1);
+
+    return React.createElement(ChildHandler, _extends({}, this.props, { handlerPath: rest }));
+  }
+});
+
+var routes = {
+  "orders": {
+    path: function path(params) {
+      return "/";
+    },
+    match: function match(path, qs) {
+      console.log("route is orders");
+      return path == "/" && { handlerPath: [Layout, Header, Orders] };
+    }
+  },
+  "order": {
+    path: function path(params) {
+      return "/order/" + params;
+    },
+    match: function match(path, qs) {
+      var r = new RegExp("/order/([^/]*)$").exec(path);
+      console.log("path of order is", r);
+      return r && { handlerPath: [LayoutOrder, Order], order_id: r[1] };
+    }
+  }
+};
+
+var remoteProps = {
+  // user: (props)=>{
+  //   return {
+  //     url: "/api/me",
+  //     prop: "user"
+  //   }
+  // },
+  orders: function orders(props) {
+    // if (!props.user)
+    //   return
+    // var qs = { ...props.qs, user_id: props.user.value.id }
+    var qs = _extends({}, props.qs);
+    var query = Qs.stringify(qs);
+    return {
+      url: "/api/orders" + (query == '' ? '' : '?' + query),
+      prop: "orders"
+    };
+  },
+  order: function order(props) {
+    return {
+      url: "/api/order/" + props.order_id,
+      prop: "order"
+    };
+  }
+};
+
+function addRemoteProps(props) {
+  console.log("addRemoteProps", props);
+  return new Promise(function (resolve, reject) {
+    var remoteProps = Array.prototype.concat.apply([], props.handlerPath.map(function (c) {
+      return c.remoteProps;
+    }) // -> [[remoteProps.user], [remoteProps.orders], null]
+    .filter(function (p) {
+      return p;
+    }) // -> [[remoteProps.user], [remoteProps.orders]]
+    );
+
+    var remoteProps = remoteProps.map(function (spec_fun) {
+      return spec_fun(props);
+    }) // -> 1st call [{url: '/api/me', prop: 'user'}, undefined]
+    // -> 2nd call [{url: '/api/me', prop: 'user'}, {url: '/api/orders?user_id=123', prop: 'orders'}]
+    .filter(function (specs) {
+      return specs;
+    }) // get rid of undefined from remoteProps that don't match their dependencies
+    .filter(function (specs) {
+      return !props[specs.prop] || props[specs.prop].url != specs.url;
+    }); // get rid of remoteProps already resolved with the url
+    if (remoteProps.length == 0) {
+      return resolve(props);
+    }
+
+    var promise = When.map( // Returns a Promise that either on a list of resolved remoteProps, or on the rejected value by the first fetch who failed 
+    remoteProps.map(function (spec) {
+      // Returns a list of Promises that resolve on list of resolved remoteProps ([{url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'}])
+      return HTTP.get(spec.url).then(function (result) {
+        spec.value = result;return spec;
+      }); // we want to keep the url in the value resolved by the promise here. spec = {url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'} 
+    }));
+
+    When.reduce(promise, function (acc, spec) {
+      // {url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'}
+      acc[spec.prop] = { url: spec.url, value: spec.value };
+      return acc;
+    }, props).then(function (newProps) {
+      addRemoteProps(newProps).then(resolve, reject);
+    }, reject);
+  });
+}
+
+var HTTP = new function () {
+  var _this3 = this;
+
+  this.get = function (url) {
+    return _this3.req('GET', url);
+  };
+  this.delete = function (url) {
+    return _this3.req('DELETE', url);
+  };
+  this.post = function (url, data) {
+    return _this3.req('POST', url, data);
+  };
+  this.put = function (url, data) {
+    return _this3.req('PUT', url, data);
+  };
+
+  this.req = function (method, url, data) {
+    return new Promise(function (resolve, reject) {
+      var req = new XMLHttpRequest();
+      req.open(method, url);
+      req.responseType = "text";
+      req.setRequestHeader("accept", "application/json,*/*;0.8");
+      req.setRequestHeader("content-type", "application/json");
+      req.onload = function () {
+        if (req.status >= 200 && req.status < 300) {
+          resolve(req.responseText && JSON.parse(req.responseText));
+        } else {
+          reject({ http_code: req.status });
+        }
+      };
+      req.onerror = function (err) {
+        reject({ http_code: req.status });
+      };
+      req.send(data && JSON.stringify(data));
+    });
+  };
+}();
+
+var Orders = createReactClass({
+  displayName: 'Orders',
+
+  statics: {
+    remoteProps: [remoteProps.orders]
+  },
+  render: function render() {
+    var _this4 = this;
+
+    console.log("in orders props are", this.props);
+    return React.createElement(
+      'div',
+      {
+        className: 'orders'
+      },
+      React.createElement(
+        'div',
+        {
+          className: 'table'
+        },
+        React.createElement(
+          'div',
+          {
+            className: 'table-header'
+          },
+          React.createElement(
+            'div',
+            {
+              className: 'header-col'
+            },
+            React.createElement(
+              'div',
+              {
+                className: 'text-block-4'
+              },
+              'command number'
+            )
+          ),
+          React.createElement(
+            'div',
+            {
+              className: 'header-col'
+            },
+            React.createElement(
+              'div',
+              {
+                className: 'text-block-4'
+              },
+              'customer'
+            )
+          ),
+          React.createElement(
+            'div',
+            {
+              className: 'header-col'
+            },
+            React.createElement(
+              'div',
+              {
+                className: 'text-block-4'
+              },
+              'address'
+            )
+          ),
+          React.createElement(
+            'div',
+            {
+              className: 'header-col'
+            },
+            React.createElement(
+              'div',
+              {
+                className: 'text-block-4'
+              },
+              'quantity'
+            )
+          ),
+          React.createElement(
+            'div',
+            {
+              className: 'header-col'
+            },
+            React.createElement(
+              'div',
+              {
+                className: 'text-block-4'
+              },
+              'details'
+            )
+          ),
+          React.createElement(
+            'div',
+            {
+              className: 'header-col'
+            },
+            React.createElement(
+              'div',
+              {
+                className: 'text-block-4'
+              },
+              'pay'
+            )
+          )
+        ),
+        React.createElement(
+          'div',
+          {
+            className: 'table-body'
+          },
+          this.props.orders.value.map(function (order) {
+            return React.createElement(
+              'div',
+              {
+                className: 'table-line'
+              },
+              React.createElement(
+                'div',
+                {
+                  className: 'table-col1'
+                },
+                order.remoteid
+              ),
+              React.createElement(
+                'div',
+                {
+                  className: 'table-col2'
+                },
+                order.custom.customer.full_name
+              ),
+              React.createElement(
+                'div',
+                {
+                  className: 'table-col3'
+                },
+                order.custom.billing_address
+              ),
+              React.createElement(
+                'div',
+                {
+                  className: 'table-col4'
+                },
+                order.items
+              ),
+              React.createElement(
+                'div',
+                {
+                  className: 'table-col5',
+                  onClick: function onClick() {
+                    GoTo("order", order.remoteid);
+                  } },
+                "->"
+              ),
+              React.createElement(
+                'div',
+                {
+                  className: 'table-col6',
+                  onClick: function onClick() {
+                    _this4.props.modal({
+                      type: 'delete',
+                      title: 'Order deletion',
+                      message: 'Are you sure you want to delete this ?',
+                      callback: function callback(reload) {
+                        console.log("callback", reload);
+                        //Do something with the return value
+                        if (reload) {
+                          HTTP.delete("/api/order/delete/" + order.remoteid).then(function (result) {
+                            GoTo("orders");
+                          });
+                        }
+                      }
+                    });
+                  } },
+                'delete'
+              )
+            );
+          })
+        )
+      )
+    );
+  }
+});
+
+var Order = createReactClass({
+  displayName: 'Order',
+
+  statics: {
+    remoteProps: [remoteProps.order]
+  },
+  render: function render() {
+    return React.createElement(
+      'div',
+      {
+        className: 'header'
+      },
+      React.createElement(
+        'div',
+        {
+          className: 'header-container'
+        },
+        React.createElement(
+          'h1',
+          {
+            className: 'heading'
+          },
+          React.createElement(
+            'strong',
+            {
+              className: 'bold-text'
+            },
+            'Orders '
+          ),
+          React.createElement(
+            'span',
+            {
+              className: 'text-span'
+            },
+            React.createElement(
+              'strong',
+              null,
+              '\uF002'
+            )
+          )
+        )
+      ),
+      React.createElement(
+        'div',
+        {
+          className: 'order'
+        },
+        React.createElement(
+          'div',
+          {
+            className: 'div-block-11 principal-order-info'
+          },
+          React.createElement(
+            'div',
+            {
+              className: 'order-infos client'
+            },
+            'name: ',
+            this.props.order.value.custom.customer.full_name
+          ),
+          React.createElement(
+            'div',
+            {
+              className: 'order-infos address'
+            },
+            'address: ',
+            this.props.order.value.custom.billing_address
+          ),
+          React.createElement(
+            'div',
+            {
+              className: 'order-infos command-number'
+            },
+            'command number: ',
+            this.props.order.value.remoteid
+          )
+        )
+      )
+    );
+  }
+});
+
+var browserState = { Child: Child };
+
+var GoTo = function GoTo(route, params, query) {
+  console.log("GO TO CALLED !!!");
+  var qs = Qs.stringify(query);
+  var url = routes[route].path(params) + (qs == '' ? '' : '?' + qs);
+  console.log(url);
+  history.pushState({}, "", url);
+  onPathChange();
+};
+
+function onPathChange() {
+  console.log("onPathChange !!!!");
+  var path = location.pathname;
+  var qs = Qs.parse(location.search.slice(1));
+  var cookies = Cookie.parse(document.cookie);
+  console.log(path, qs, cookies);
+
+  browserState = _extends({}, browserState, {
+    path: path,
+    qs: qs,
+    cookie: cookies
+  });
+
+  var route, routeProps;
+  //We try to match the requested path to one our our routes
+  for (var key in routes) {
+    routeProps = routes[key].match(path, qs);
+    if (routeProps) {
+      route = key;
+      break;
+    }
+  }
+  browserState = _extends({}, browserState, routeProps, {
+    route: route
+  });
+
+  addRemoteProps(browserState).then(function (props) {
+    console.log("adding remote props");
+    browserState = props;
+    //Log our new browserState
+    //Render our components using our remote data
+    ReactDOM.render(React.createElement(Child, browserState), document.getElementById('root'));
+  }, function (res) {
+    ReactDOM.render(React.createElement(ErrorPage, { message: "Shit happened", code: res.http_code }), document.getElementById('root'));
+  });
+
+  //If we don't have a match, we render an Error component
+  if (!route) return ReactDOM.render(React.createElement(ErrorPage, { message: "Not Found", code: 404 }), document.getElementById('root'));
+  ReactDOM.render(React.createElement(Child, browserState), document.getElementById('root'));
+}
+
+window.addEventListener("popstate", function () {
+  onPathChange();
+});
+onPathChange();
 
 /* required css for our application */
-__webpack_require__(20);
+__webpack_require__(47);
 
 /***/ }),
-/* 5 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -687,7 +1530,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "index.html");
 
 /***/ }),
-/* 6 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -695,15 +1538,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "orders.html");
 
 /***/ }),
-/* 7 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "order.html");
+/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "order_details.html");
 
 /***/ }),
-/* 8 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -741,15 +1584,15 @@ if (process.env.NODE_ENV === 'production') {
   // DCE check should happen before ReactDOM bundle executes so that
   // DevTools can report bad minification during injection.
   checkDCE();
-  module.exports = __webpack_require__(9);
+  module.exports = __webpack_require__(15);
 } else {
-  module.exports = __webpack_require__(14);
+  module.exports = __webpack_require__(20);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 9 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -764,7 +1607,7 @@ if (process.env.NODE_ENV === 'production') {
 /*
  Modernizr 3.0.0pre (Custom Build) | MIT
 */
-var aa=__webpack_require__(2),m=__webpack_require__(1),r=__webpack_require__(3);function y(a){for(var b="https://reactjs.org/docs/error-decoder.html?invariant="+a,c=1;c<arguments.length;c++)b+="&args[]="+encodeURIComponent(arguments[c]);return"Minified React error #"+a+"; visit "+b+" for the full message or use the non-minified dev environment for full errors and additional helpful warnings."}if(!aa)throw Error(y(227));var ba=new Set,ca={};function da(a,b){ea(a,b);ea(a+"Capture",b)}
+var aa=__webpack_require__(3),m=__webpack_require__(2),r=__webpack_require__(5);function y(a){for(var b="https://reactjs.org/docs/error-decoder.html?invariant="+a,c=1;c<arguments.length;c++)b+="&args[]="+encodeURIComponent(arguments[c]);return"Minified React error #"+a+"; visit "+b+" for the full message or use the non-minified dev environment for full errors and additional helpful warnings."}if(!aa)throw Error(y(227));var ba=new Set,ca={};function da(a,b){ea(a,b);ea(a+"Capture",b)}
 function ea(a,b){ca[a]=b;for(a=0;a<b.length;a++)ba.add(b[a])}
 var fa=!("undefined"===typeof window||"undefined"===typeof window.document||"undefined"===typeof window.document.createElement),ha=/^[:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD][:A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\-.0-9\u00B7\u0300-\u036F\u203F-\u2040]*$/,ia=Object.prototype.hasOwnProperty,
 ja={},ka={};function la(a){if(ia.call(ka,a))return!0;if(ia.call(ja,a))return!1;if(ha.test(a))return ka[a]=!0;ja[a]=!0;return!1}function ma(a,b,c,d){if(null!==c&&0===c.type)return!1;switch(typeof b){case "function":case "symbol":return!0;case "boolean":if(d)return!1;if(null!==c)return!c.acceptsBooleans;a=a.toLowerCase().slice(0,5);return"data-"!==a&&"aria-"!==a;default:return!1}}
@@ -1053,7 +1896,7 @@ exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!rk(c))throw Er
 
 
 /***/ }),
-/* 10 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1065,7 +1908,7 @@ exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!rk(c))throw Er
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var l=__webpack_require__(1),n=60103,p=60106;exports.Fragment=60107;exports.StrictMode=60108;exports.Profiler=60114;var q=60109,r=60110,t=60112;exports.Suspense=60113;var u=60115,v=60116;
+var l=__webpack_require__(2),n=60103,p=60106;exports.Fragment=60107;exports.StrictMode=60108;exports.Profiler=60114;var q=60109,r=60110,t=60112;exports.Suspense=60113;var u=60115,v=60116;
 if("function"===typeof Symbol&&Symbol.for){var w=Symbol.for;n=w("react.element");p=w("react.portal");exports.Fragment=w("react.fragment");exports.StrictMode=w("react.strict_mode");exports.Profiler=w("react.profiler");q=w("react.provider");r=w("react.context");t=w("react.forward_ref");exports.Suspense=w("react.suspense");u=w("react.memo");v=w("react.lazy")}var x="function"===typeof Symbol&&Symbol.iterator;
 function y(a){if(null===a||"object"!==typeof a)return null;a=x&&a[x]||a["@@iterator"];return"function"===typeof a?a:null}function z(a){for(var b="https://reactjs.org/docs/error-decoder.html?invariant="+a,c=1;c<arguments.length;c++)b+="&args[]="+encodeURIComponent(arguments[c]);return"Minified React error #"+a+"; visit "+b+" for the full message or use the non-minified dev environment for full errors and additional helpful warnings."}
 var A={isMounted:function(){return!1},enqueueForceUpdate:function(){},enqueueReplaceState:function(){},enqueueSetState:function(){}},B={};function C(a,b,c){this.props=a;this.context=b;this.refs=B;this.updater=c||A}C.prototype.isReactComponent={};C.prototype.setState=function(a,b){if("object"!==typeof a&&"function"!==typeof a&&null!=a)throw Error(z(85));this.updater.enqueueSetState(this,a,b,"setState")};C.prototype.forceUpdate=function(a){this.updater.enqueueForceUpdate(this,a,"forceUpdate")};
@@ -1083,7 +1926,7 @@ exports.useLayoutEffect=function(a,b){return S().useLayoutEffect(a,b)};exports.u
 
 
 /***/ }),
-/* 11 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1102,7 +1945,7 @@ if (process.env.NODE_ENV !== "production") {
   (function() {
 'use strict';
 
-var _assign = __webpack_require__(1);
+var _assign = __webpack_require__(2);
 
 // TODO: this is special because it gets imported during build.
 var ReactVersion = '17.0.1';
@@ -3421,10 +4264,10 @@ exports.version = ReactVersion;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 12 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3451,7 +4294,7 @@ exports.unstable_wrapCallback=function(a){var b=P;return function(){var c=P;P=b;
 
 
 /***/ }),
-/* 13 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4300,10 +5143,10 @@ exports.unstable_wrapCallback = unstable_wrapCallback;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 14 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4322,10 +5165,10 @@ if (process.env.NODE_ENV !== "production") {
   (function() {
 'use strict';
 
-var React = __webpack_require__(2);
-var _assign = __webpack_require__(1);
-var Scheduler = __webpack_require__(3);
-var tracing = __webpack_require__(15);
+var React = __webpack_require__(3);
+var _assign = __webpack_require__(2);
+var Scheduler = __webpack_require__(5);
+var tracing = __webpack_require__(21);
 
 var ReactSharedInternals = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
 
@@ -30570,25 +31413,25 @@ exports.version = ReactVersion;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 15 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 if (process.env.NODE_ENV === 'production') {
-  module.exports = __webpack_require__(16);
+  module.exports = __webpack_require__(22);
 } else {
-  module.exports = __webpack_require__(17);
+  module.exports = __webpack_require__(23);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 16 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30604,7 +31447,7 @@ var b=0;exports.__interactionsRef=null;exports.__subscriberRef=null;exports.unst
 
 
 /***/ }),
-/* 17 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30956,10 +31799,2610 @@ exports.unstable_wrap = unstable_wrap;
   })();
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 18 */
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(25);
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// Load modules
+
+var Stringify = __webpack_require__(26);
+var Parse = __webpack_require__(27);
+
+
+// Declare internals
+
+var internals = {};
+
+
+module.exports = {
+    stringify: Stringify,
+    parse: Parse
+};
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// Load modules
+
+var Utils = __webpack_require__(6);
+
+
+// Declare internals
+
+var internals = {
+    delimiter: '&',
+    indices: true
+};
+
+
+internals.stringify = function (obj, prefix, options) {
+
+    if (Utils.isBuffer(obj)) {
+        obj = obj.toString();
+    }
+    else if (obj instanceof Date) {
+        obj = obj.toISOString();
+    }
+    else if (obj === null) {
+        obj = '';
+    }
+
+    if (typeof obj === 'string' ||
+        typeof obj === 'number' ||
+        typeof obj === 'boolean') {
+
+        return [encodeURIComponent(prefix) + '=' + encodeURIComponent(obj)];
+    }
+
+    var values = [];
+
+    if (typeof obj === 'undefined') {
+        return values;
+    }
+
+    var objKeys = Object.keys(obj);
+    for (var i = 0, il = objKeys.length; i < il; ++i) {
+        var key = objKeys[i];
+        if (!options.indices &&
+            Array.isArray(obj)) {
+
+            values = values.concat(internals.stringify(obj[key], prefix, options));
+        }
+        else {
+            values = values.concat(internals.stringify(obj[key], prefix + '[' + key + ']', options));
+        }
+    }
+
+    return values;
+};
+
+
+module.exports = function (obj, options) {
+
+    options = options || {};
+    var delimiter = typeof options.delimiter === 'undefined' ? internals.delimiter : options.delimiter;
+    options.indices = typeof options.indices === 'boolean' ? options.indices : internals.indices;
+
+    var keys = [];
+
+    if (typeof obj !== 'object' ||
+        obj === null) {
+
+        return '';
+    }
+
+    var objKeys = Object.keys(obj);
+    for (var i = 0, il = objKeys.length; i < il; ++i) {
+        var key = objKeys[i];
+        keys = keys.concat(internals.stringify(obj[key], key, options));
+    }
+
+    return keys.join(delimiter);
+};
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// Load modules
+
+var Utils = __webpack_require__(6);
+
+
+// Declare internals
+
+var internals = {
+    delimiter: '&',
+    depth: 5,
+    arrayLimit: 20,
+    parameterLimit: 1000
+};
+
+
+internals.parseValues = function (str, options) {
+
+    var obj = {};
+    var parts = str.split(options.delimiter, options.parameterLimit === Infinity ? undefined : options.parameterLimit);
+
+    for (var i = 0, il = parts.length; i < il; ++i) {
+        var part = parts[i];
+        var pos = part.indexOf(']=') === -1 ? part.indexOf('=') : part.indexOf(']=') + 1;
+
+        if (pos === -1) {
+            obj[Utils.decode(part)] = '';
+        }
+        else {
+            var key = Utils.decode(part.slice(0, pos));
+            var val = Utils.decode(part.slice(pos + 1));
+
+            if (!obj.hasOwnProperty(key)) {
+                obj[key] = val;
+            }
+            else {
+                obj[key] = [].concat(obj[key]).concat(val);
+            }
+        }
+    }
+
+    return obj;
+};
+
+
+internals.parseObject = function (chain, val, options) {
+
+    if (!chain.length) {
+        return val;
+    }
+
+    var root = chain.shift();
+
+    var obj = {};
+    if (root === '[]') {
+        obj = [];
+        obj = obj.concat(internals.parseObject(chain, val, options));
+    }
+    else {
+        var cleanRoot = root[0] === '[' && root[root.length - 1] === ']' ? root.slice(1, root.length - 1) : root;
+        var index = parseInt(cleanRoot, 10);
+        var indexString = '' + index;
+        if (!isNaN(index) &&
+            root !== cleanRoot &&
+            indexString === cleanRoot &&
+            index >= 0 &&
+            index <= options.arrayLimit) {
+
+            obj = [];
+            obj[index] = internals.parseObject(chain, val, options);
+        }
+        else {
+            obj[cleanRoot] = internals.parseObject(chain, val, options);
+        }
+    }
+
+    return obj;
+};
+
+
+internals.parseKeys = function (key, val, options) {
+
+    if (!key) {
+        return;
+    }
+
+    // The regex chunks
+
+    var parent = /^([^\[\]]*)/;
+    var child = /(\[[^\[\]]*\])/g;
+
+    // Get the parent
+
+    var segment = parent.exec(key);
+
+    // Don't allow them to overwrite object prototype properties
+
+    if (Object.prototype.hasOwnProperty(segment[1])) {
+        return;
+    }
+
+    // Stash the parent if it exists
+
+    var keys = [];
+    if (segment[1]) {
+        keys.push(segment[1]);
+    }
+
+    // Loop through children appending to the array until we hit depth
+
+    var i = 0;
+    while ((segment = child.exec(key)) !== null && i < options.depth) {
+
+        ++i;
+        if (!Object.prototype.hasOwnProperty(segment[1].replace(/\[|\]/g, ''))) {
+            keys.push(segment[1]);
+        }
+    }
+
+    // If there's a remainder, just add whatever is left
+
+    if (segment) {
+        keys.push('[' + key.slice(segment.index) + ']');
+    }
+
+    return internals.parseObject(keys, val, options);
+};
+
+
+module.exports = function (str, options) {
+
+    if (str === '' ||
+        str === null ||
+        typeof str === 'undefined') {
+
+        return {};
+    }
+
+    options = options || {};
+    options.delimiter = typeof options.delimiter === 'string' || Utils.isRegExp(options.delimiter) ? options.delimiter : internals.delimiter;
+    options.depth = typeof options.depth === 'number' ? options.depth : internals.depth;
+    options.arrayLimit = typeof options.arrayLimit === 'number' ? options.arrayLimit : internals.arrayLimit;
+    options.parameterLimit = typeof options.parameterLimit === 'number' ? options.parameterLimit : internals.parameterLimit;
+
+    var tempObj = typeof str === 'string' ? internals.parseValues(str, options) : str;
+    var obj = {};
+
+    // Iterate over the keys and setup the new object
+
+    var keys = Object.keys(tempObj);
+    for (var i = 0, il = keys.length; i < il; ++i) {
+        var key = keys[i];
+        var newObj = internals.parseKeys(key, tempObj[key], options);
+        obj = Utils.merge(obj, newObj);
+    }
+
+    return Utils.compact(obj);
+};
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports) {
+
+
+/// Serialize the a name value pair into a cookie string suitable for
+/// http headers. An optional options object specified cookie parameters
+///
+/// serialize('foo', 'bar', { httpOnly: true })
+///   => "foo=bar; httpOnly"
+///
+/// @param {String} name
+/// @param {String} val
+/// @param {Object} options
+/// @return {String}
+var serialize = function(name, val, opt){
+    opt = opt || {};
+    var enc = opt.encode || encode;
+    var pairs = [name + '=' + enc(val)];
+
+    if (null != opt.maxAge) {
+        var maxAge = opt.maxAge - 0;
+        if (isNaN(maxAge)) throw new Error('maxAge should be a Number');
+        pairs.push('Max-Age=' + maxAge);
+    }
+
+    if (opt.domain) pairs.push('Domain=' + opt.domain);
+    if (opt.path) pairs.push('Path=' + opt.path);
+    if (opt.expires) pairs.push('Expires=' + opt.expires.toUTCString());
+    if (opt.httpOnly) pairs.push('HttpOnly');
+    if (opt.secure) pairs.push('Secure');
+
+    return pairs.join('; ');
+};
+
+/// Parse the given cookie header string into an object
+/// The object has the various cookies as keys(names) => values
+/// @param {String} str
+/// @return {Object}
+var parse = function(str, opt) {
+    opt = opt || {};
+    var obj = {}
+    var pairs = str.split(/; */);
+    var dec = opt.decode || decode;
+
+    pairs.forEach(function(pair) {
+        var eq_idx = pair.indexOf('=')
+
+        // skip things that don't look like key=value
+        if (eq_idx < 0) {
+            return;
+        }
+
+        var key = pair.substr(0, eq_idx).trim()
+        var val = pair.substr(++eq_idx, pair.length).trim();
+
+        // quoted values
+        if ('"' == val[0]) {
+            val = val.slice(1, -1);
+        }
+
+        // only assign once
+        if (undefined == obj[key]) {
+            try {
+                obj[key] = dec(val);
+            } catch (e) {
+                obj[key] = val;
+            }
+        }
+    });
+
+    return obj;
+};
+
+var encode = encodeURIComponent;
+var decode = decodeURIComponent;
+
+module.exports.serialize = serialize;
+module.exports.parse = parse;
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+
+/**
+ * Promises/A+ and when() implementation
+ * when is part of the cujoJS family of libraries (http://cujojs.com/)
+ * @author Brian Cavalier
+ * @author John Hann
+ */
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require) {
+
+	var timed = __webpack_require__(30);
+	var array = __webpack_require__(32);
+	var flow = __webpack_require__(33);
+	var fold = __webpack_require__(34);
+	var inspect = __webpack_require__(35);
+	var generate = __webpack_require__(36);
+	var progress = __webpack_require__(37);
+	var withThis = __webpack_require__(38);
+	var unhandledRejection = __webpack_require__(39);
+	var TimeoutError = __webpack_require__(7);
+
+	var Promise = [array, flow, fold, generate, progress,
+		inspect, withThis, timed, unhandledRejection]
+		.reduce(function(Promise, feature) {
+			return feature(Promise);
+		}, __webpack_require__(41));
+
+	var apply = __webpack_require__(9)(Promise);
+
+	// Public API
+
+	when.promise     = promise;              // Create a pending promise
+	when.resolve     = Promise.resolve;      // Create a resolved promise
+	when.reject      = Promise.reject;       // Create a rejected promise
+
+	when.lift        = lift;                 // lift a function to return promises
+	when['try']      = attempt;              // call a function and return a promise
+	when.attempt     = attempt;              // alias for when.try
+
+	when.iterate     = Promise.iterate;      // DEPRECATED (use cujojs/most streams) Generate a stream of promises
+	when.unfold      = Promise.unfold;       // DEPRECATED (use cujojs/most streams) Generate a stream of promises
+
+	when.join        = join;                 // Join 2 or more promises
+
+	when.all         = all;                  // Resolve a list of promises
+	when.settle      = settle;               // Settle a list of promises
+
+	when.any         = lift(Promise.any);    // One-winner race
+	when.some        = lift(Promise.some);   // Multi-winner race
+	when.race        = lift(Promise.race);   // First-to-settle race
+
+	when.map         = map;                  // Array.map() for promises
+	when.filter      = filter;               // Array.filter() for promises
+	when.reduce      = lift(Promise.reduce);       // Array.reduce() for promises
+	when.reduceRight = lift(Promise.reduceRight);  // Array.reduceRight() for promises
+
+	when.isPromiseLike = isPromiseLike;      // Is something promise-like, aka thenable
+
+	when.Promise     = Promise;              // Promise constructor
+	when.defer       = defer;                // Create a {promise, resolve, reject} tuple
+
+	// Error types
+
+	when.TimeoutError = TimeoutError;
+
+	/**
+	 * Get a trusted promise for x, or by transforming x with onFulfilled
+	 *
+	 * @param {*} x
+	 * @param {function?} onFulfilled callback to be called when x is
+	 *   successfully fulfilled.  If promiseOrValue is an immediate value, callback
+	 *   will be invoked immediately.
+	 * @param {function?} onRejected callback to be called when x is
+	 *   rejected.
+	 * @param {function?} onProgress callback to be called when progress updates
+	 *   are issued for x. @deprecated
+	 * @returns {Promise} a new promise that will fulfill with the return
+	 *   value of callback or errback or the completion value of promiseOrValue if
+	 *   callback and/or errback is not supplied.
+	 */
+	function when(x, onFulfilled, onRejected, onProgress) {
+		var p = Promise.resolve(x);
+		if (arguments.length < 2) {
+			return p;
+		}
+
+		return p.then(onFulfilled, onRejected, onProgress);
+	}
+
+	/**
+	 * Creates a new promise whose fate is determined by resolver.
+	 * @param {function} resolver function(resolve, reject, notify)
+	 * @returns {Promise} promise whose fate is determine by resolver
+	 */
+	function promise(resolver) {
+		return new Promise(resolver);
+	}
+
+	/**
+	 * Lift the supplied function, creating a version of f that returns
+	 * promises, and accepts promises as arguments.
+	 * @param {function} f
+	 * @returns {Function} version of f that returns promises
+	 */
+	function lift(f) {
+		return function() {
+			for(var i=0, l=arguments.length, a=new Array(l); i<l; ++i) {
+				a[i] = arguments[i];
+			}
+			return apply(f, this, a);
+		};
+	}
+
+	/**
+	 * Call f in a future turn, with the supplied args, and return a promise
+	 * for the result.
+	 * @param {function} f
+	 * @returns {Promise}
+	 */
+	function attempt(f /*, args... */) {
+		/*jshint validthis:true */
+		for(var i=0, l=arguments.length-1, a=new Array(l); i<l; ++i) {
+			a[i] = arguments[i+1];
+		}
+		return apply(f, this, a);
+	}
+
+	/**
+	 * Creates a {promise, resolver} pair, either or both of which
+	 * may be given out safely to consumers.
+	 * @return {{promise: Promise, resolve: function, reject: function, notify: function}}
+	 */
+	function defer() {
+		return new Deferred();
+	}
+
+	function Deferred() {
+		var p = Promise._defer();
+
+		function resolve(x) { p._handler.resolve(x); }
+		function reject(x) { p._handler.reject(x); }
+		function notify(x) { p._handler.notify(x); }
+
+		this.promise = p;
+		this.resolve = resolve;
+		this.reject = reject;
+		this.notify = notify;
+		this.resolver = { resolve: resolve, reject: reject, notify: notify };
+	}
+
+	/**
+	 * Determines if x is promise-like, i.e. a thenable object
+	 * NOTE: Will return true for *any thenable object*, and isn't truly
+	 * safe, since it may attempt to access the `then` property of x (i.e.
+	 *  clever/malicious getters may do weird things)
+	 * @param {*} x anything
+	 * @returns {boolean} true if x is promise-like
+	 */
+	function isPromiseLike(x) {
+		return x && typeof x.then === 'function';
+	}
+
+	/**
+	 * Return a promise that will resolve only once all the supplied arguments
+	 * have resolved. The resolution value of the returned promise will be an array
+	 * containing the resolution values of each of the arguments.
+	 * @param {...*} arguments may be a mix of promises and values
+	 * @returns {Promise}
+	 */
+	function join(/* ...promises */) {
+		return Promise.all(arguments);
+	}
+
+	/**
+	 * Return a promise that will fulfill once all input promises have
+	 * fulfilled, or reject when any one input promise rejects.
+	 * @param {array|Promise} promises array (or promise for an array) of promises
+	 * @returns {Promise}
+	 */
+	function all(promises) {
+		return when(promises, Promise.all);
+	}
+
+	/**
+	 * Return a promise that will always fulfill with an array containing
+	 * the outcome states of all input promises.  The returned promise
+	 * will only reject if `promises` itself is a rejected promise.
+	 * @param {array|Promise} promises array (or promise for an array) of promises
+	 * @returns {Promise} promise for array of settled state descriptors
+	 */
+	function settle(promises) {
+		return when(promises, Promise.settle);
+	}
+
+	/**
+	 * Promise-aware array map function, similar to `Array.prototype.map()`,
+	 * but input array may contain promises or values.
+	 * @param {Array|Promise} promises array of anything, may contain promises and values
+	 * @param {function(x:*, index:Number):*} mapFunc map function which may
+	 *  return a promise or value
+	 * @returns {Promise} promise that will fulfill with an array of mapped values
+	 *  or reject if any input promise rejects.
+	 */
+	function map(promises, mapFunc) {
+		return when(promises, function(promises) {
+			return Promise.map(promises, mapFunc);
+		});
+	}
+
+	/**
+	 * Filter the provided array of promises using the provided predicate.  Input may
+	 * contain promises and values
+	 * @param {Array|Promise} promises array of promises and values
+	 * @param {function(x:*, index:Number):boolean} predicate filtering predicate.
+	 *  Must return truthy (or promise for truthy) for items to retain.
+	 * @returns {Promise} promise that will fulfill with an array containing all items
+	 *  for which predicate returned truthy.
+	 */
+	function filter(promises, predicate) {
+		return when(promises, function(promises) {
+			return Promise.filter(promises, predicate);
+		});
+	}
+
+	return when;
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+})(__webpack_require__(0));
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function(require) {
+
+	var env = __webpack_require__(4);
+	var TimeoutError = __webpack_require__(7);
+
+	function setTimeout(f, ms, x, y) {
+		return env.setTimer(function() {
+			f(x, y, ms);
+		}, ms);
+	}
+
+	return function timed(Promise) {
+		/**
+		 * Return a new promise whose fulfillment value is revealed only
+		 * after ms milliseconds
+		 * @param {number} ms milliseconds
+		 * @returns {Promise}
+		 */
+		Promise.prototype.delay = function(ms) {
+			var p = this._beget();
+			this._handler.fold(handleDelay, ms, void 0, p._handler);
+			return p;
+		};
+
+		function handleDelay(ms, x, h) {
+			setTimeout(resolveDelay, ms, x, h);
+		}
+
+		function resolveDelay(x, h) {
+			h.resolve(x);
+		}
+
+		/**
+		 * Return a new promise that rejects after ms milliseconds unless
+		 * this promise fulfills earlier, in which case the returned promise
+		 * fulfills with the same value.
+		 * @param {number} ms milliseconds
+		 * @param {Error|*=} reason optional rejection reason to use, defaults
+		 *   to a TimeoutError if not provided
+		 * @returns {Promise}
+		 */
+		Promise.prototype.timeout = function(ms, reason) {
+			var p = this._beget();
+			var h = p._handler;
+
+			var t = setTimeout(onTimeout, ms, reason, p._handler);
+
+			this._handler.visit(h,
+				function onFulfill(x) {
+					env.clearTimer(t);
+					this.resolve(x); // this = h
+				},
+				function onReject(x) {
+					env.clearTimer(t);
+					this.reject(x); // this = h
+				},
+				h.notify);
+
+			return p;
+		};
+
+		function onTimeout(reason, h, ms) {
+			var e = typeof reason === 'undefined'
+				? new TimeoutError('timed out after ' + ms + 'ms')
+				: reason;
+			h.reject(e);
+		}
+
+		return Promise;
+	};
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function(require) {
+
+	var state = __webpack_require__(8);
+	var applier = __webpack_require__(9);
+
+	return function array(Promise) {
+
+		var applyFold = applier(Promise);
+		var toPromise = Promise.resolve;
+		var all = Promise.all;
+
+		var ar = Array.prototype.reduce;
+		var arr = Array.prototype.reduceRight;
+		var slice = Array.prototype.slice;
+
+		// Additional array combinators
+
+		Promise.any = any;
+		Promise.some = some;
+		Promise.settle = settle;
+
+		Promise.map = map;
+		Promise.filter = filter;
+		Promise.reduce = reduce;
+		Promise.reduceRight = reduceRight;
+
+		/**
+		 * When this promise fulfills with an array, do
+		 * onFulfilled.apply(void 0, array)
+		 * @param {function} onFulfilled function to apply
+		 * @returns {Promise} promise for the result of applying onFulfilled
+		 */
+		Promise.prototype.spread = function(onFulfilled) {
+			return this.then(all).then(function(array) {
+				return onFulfilled.apply(this, array);
+			});
+		};
+
+		return Promise;
+
+		/**
+		 * One-winner competitive race.
+		 * Return a promise that will fulfill when one of the promises
+		 * in the input array fulfills, or will reject when all promises
+		 * have rejected.
+		 * @param {array} promises
+		 * @returns {Promise} promise for the first fulfilled value
+		 */
+		function any(promises) {
+			var p = Promise._defer();
+			var resolver = p._handler;
+			var l = promises.length>>>0;
+
+			var pending = l;
+			var errors = [];
+
+			for (var h, x, i = 0; i < l; ++i) {
+				x = promises[i];
+				if(x === void 0 && !(i in promises)) {
+					--pending;
+					continue;
+				}
+
+				h = Promise._handler(x);
+				if(h.state() > 0) {
+					resolver.become(h);
+					Promise._visitRemaining(promises, i, h);
+					break;
+				} else {
+					h.visit(resolver, handleFulfill, handleReject);
+				}
+			}
+
+			if(pending === 0) {
+				resolver.reject(new RangeError('any(): array must not be empty'));
+			}
+
+			return p;
+
+			function handleFulfill(x) {
+				/*jshint validthis:true*/
+				errors = null;
+				this.resolve(x); // this === resolver
+			}
+
+			function handleReject(e) {
+				/*jshint validthis:true*/
+				if(this.resolved) { // this === resolver
+					return;
+				}
+
+				errors.push(e);
+				if(--pending === 0) {
+					this.reject(errors);
+				}
+			}
+		}
+
+		/**
+		 * N-winner competitive race
+		 * Return a promise that will fulfill when n input promises have
+		 * fulfilled, or will reject when it becomes impossible for n
+		 * input promises to fulfill (ie when promises.length - n + 1
+		 * have rejected)
+		 * @param {array} promises
+		 * @param {number} n
+		 * @returns {Promise} promise for the earliest n fulfillment values
+		 *
+		 * @deprecated
+		 */
+		function some(promises, n) {
+			/*jshint maxcomplexity:7*/
+			var p = Promise._defer();
+			var resolver = p._handler;
+
+			var results = [];
+			var errors = [];
+
+			var l = promises.length>>>0;
+			var nFulfill = 0;
+			var nReject;
+			var x, i; // reused in both for() loops
+
+			// First pass: count actual array items
+			for(i=0; i<l; ++i) {
+				x = promises[i];
+				if(x === void 0 && !(i in promises)) {
+					continue;
+				}
+				++nFulfill;
+			}
+
+			// Compute actual goals
+			n = Math.max(n, 0);
+			nReject = (nFulfill - n + 1);
+			nFulfill = Math.min(n, nFulfill);
+
+			if(n > nFulfill) {
+				resolver.reject(new RangeError('some(): array must contain at least '
+				+ n + ' item(s), but had ' + nFulfill));
+			} else if(nFulfill === 0) {
+				resolver.resolve(results);
+			}
+
+			// Second pass: observe each array item, make progress toward goals
+			for(i=0; i<l; ++i) {
+				x = promises[i];
+				if(x === void 0 && !(i in promises)) {
+					continue;
+				}
+
+				Promise._handler(x).visit(resolver, fulfill, reject, resolver.notify);
+			}
+
+			return p;
+
+			function fulfill(x) {
+				/*jshint validthis:true*/
+				if(this.resolved) { // this === resolver
+					return;
+				}
+
+				results.push(x);
+				if(--nFulfill === 0) {
+					errors = null;
+					this.resolve(results);
+				}
+			}
+
+			function reject(e) {
+				/*jshint validthis:true*/
+				if(this.resolved) { // this === resolver
+					return;
+				}
+
+				errors.push(e);
+				if(--nReject === 0) {
+					results = null;
+					this.reject(errors);
+				}
+			}
+		}
+
+		/**
+		 * Apply f to the value of each promise in a list of promises
+		 * and return a new list containing the results.
+		 * @param {array} promises
+		 * @param {function(x:*, index:Number):*} f mapping function
+		 * @returns {Promise}
+		 */
+		function map(promises, f) {
+			return Promise._traverse(f, promises);
+		}
+
+		/**
+		 * Filter the provided array of promises using the provided predicate.  Input may
+		 * contain promises and values
+		 * @param {Array} promises array of promises and values
+		 * @param {function(x:*, index:Number):boolean} predicate filtering predicate.
+		 *  Must return truthy (or promise for truthy) for items to retain.
+		 * @returns {Promise} promise that will fulfill with an array containing all items
+		 *  for which predicate returned truthy.
+		 */
+		function filter(promises, predicate) {
+			var a = slice.call(promises);
+			return Promise._traverse(predicate, a).then(function(keep) {
+				return filterSync(a, keep);
+			});
+		}
+
+		function filterSync(promises, keep) {
+			// Safe because we know all promises have fulfilled if we've made it this far
+			var l = keep.length;
+			var filtered = new Array(l);
+			for(var i=0, j=0; i<l; ++i) {
+				if(keep[i]) {
+					filtered[j++] = Promise._handler(promises[i]).value;
+				}
+			}
+			filtered.length = j;
+			return filtered;
+
+		}
+
+		/**
+		 * Return a promise that will always fulfill with an array containing
+		 * the outcome states of all input promises.  The returned promise
+		 * will never reject.
+		 * @param {Array} promises
+		 * @returns {Promise} promise for array of settled state descriptors
+		 */
+		function settle(promises) {
+			return all(promises.map(settleOne));
+		}
+
+		function settleOne(p) {
+			// Optimize the case where we get an already-resolved when.js promise
+			//  by extracting its state:
+			var handler;
+			if (p instanceof Promise) {
+				// This is our own Promise type and we can reach its handler internals:
+				handler = p._handler.join();
+			}
+			if((handler && handler.state() === 0) || !handler) {
+				// Either still pending, or not a Promise at all:
+				return toPromise(p).then(state.fulfilled, state.rejected);
+			}
+
+			// The promise is our own, but it is already resolved. Take a shortcut.
+			// Since we're not actually handling the resolution, we need to disable
+			// rejection reporting.
+			handler._unreport();
+			return state.inspect(handler);
+		}
+
+		/**
+		 * Traditional reduce function, similar to `Array.prototype.reduce()`, but
+		 * input may contain promises and/or values, and reduceFunc
+		 * may return either a value or a promise, *and* initialValue may
+		 * be a promise for the starting value.
+		 * @param {Array|Promise} promises array or promise for an array of anything,
+		 *      may contain a mix of promises and values.
+		 * @param {function(accumulated:*, x:*, index:Number):*} f reduce function
+		 * @returns {Promise} that will resolve to the final reduced value
+		 */
+		function reduce(promises, f /*, initialValue */) {
+			return arguments.length > 2 ? ar.call(promises, liftCombine(f), arguments[2])
+					: ar.call(promises, liftCombine(f));
+		}
+
+		/**
+		 * Traditional reduce function, similar to `Array.prototype.reduceRight()`, but
+		 * input may contain promises and/or values, and reduceFunc
+		 * may return either a value or a promise, *and* initialValue may
+		 * be a promise for the starting value.
+		 * @param {Array|Promise} promises array or promise for an array of anything,
+		 *      may contain a mix of promises and values.
+		 * @param {function(accumulated:*, x:*, index:Number):*} f reduce function
+		 * @returns {Promise} that will resolve to the final reduced value
+		 */
+		function reduceRight(promises, f /*, initialValue */) {
+			return arguments.length > 2 ? arr.call(promises, liftCombine(f), arguments[2])
+					: arr.call(promises, liftCombine(f));
+		}
+
+		function liftCombine(f) {
+			return function(z, x, i) {
+				return applyFold(f, void 0, [z,x,i]);
+			};
+		}
+	};
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	return function flow(Promise) {
+
+		var resolve = Promise.resolve;
+		var reject = Promise.reject;
+		var origCatch = Promise.prototype['catch'];
+
+		/**
+		 * Handle the ultimate fulfillment value or rejection reason, and assume
+		 * responsibility for all errors.  If an error propagates out of result
+		 * or handleFatalError, it will be rethrown to the host, resulting in a
+		 * loud stack track on most platforms and a crash on some.
+		 * @param {function?} onResult
+		 * @param {function?} onError
+		 * @returns {undefined}
+		 */
+		Promise.prototype.done = function(onResult, onError) {
+			this._handler.visit(this._handler.receiver, onResult, onError);
+		};
+
+		/**
+		 * Add Error-type and predicate matching to catch.  Examples:
+		 * promise.catch(TypeError, handleTypeError)
+		 *   .catch(predicate, handleMatchedErrors)
+		 *   .catch(handleRemainingErrors)
+		 * @param onRejected
+		 * @returns {*}
+		 */
+		Promise.prototype['catch'] = Promise.prototype.otherwise = function(onRejected) {
+			if (arguments.length < 2) {
+				return origCatch.call(this, onRejected);
+			}
+
+			if(typeof onRejected !== 'function') {
+				return this.ensure(rejectInvalidPredicate);
+			}
+
+			return origCatch.call(this, createCatchFilter(arguments[1], onRejected));
+		};
+
+		/**
+		 * Wraps the provided catch handler, so that it will only be called
+		 * if the predicate evaluates truthy
+		 * @param {?function} handler
+		 * @param {function} predicate
+		 * @returns {function} conditional catch handler
+		 */
+		function createCatchFilter(handler, predicate) {
+			return function(e) {
+				return evaluatePredicate(e, predicate)
+					? handler.call(this, e)
+					: reject(e);
+			};
+		}
+
+		/**
+		 * Ensures that onFulfilledOrRejected will be called regardless of whether
+		 * this promise is fulfilled or rejected.  onFulfilledOrRejected WILL NOT
+		 * receive the promises' value or reason.  Any returned value will be disregarded.
+		 * onFulfilledOrRejected may throw or return a rejected promise to signal
+		 * an additional error.
+		 * @param {function} handler handler to be called regardless of
+		 *  fulfillment or rejection
+		 * @returns {Promise}
+		 */
+		Promise.prototype['finally'] = Promise.prototype.ensure = function(handler) {
+			if(typeof handler !== 'function') {
+				return this;
+			}
+
+			return this.then(function(x) {
+				return runSideEffect(handler, this, identity, x);
+			}, function(e) {
+				return runSideEffect(handler, this, reject, e);
+			});
+		};
+
+		function runSideEffect (handler, thisArg, propagate, value) {
+			var result = handler.call(thisArg);
+			return maybeThenable(result)
+				? propagateValue(result, propagate, value)
+				: propagate(value);
+		}
+
+		function propagateValue (result, propagate, x) {
+			return resolve(result).then(function () {
+				return propagate(x);
+			});
+		}
+
+		/**
+		 * Recover from a failure by returning a defaultValue.  If defaultValue
+		 * is a promise, it's fulfillment value will be used.  If defaultValue is
+		 * a promise that rejects, the returned promise will reject with the
+		 * same reason.
+		 * @param {*} defaultValue
+		 * @returns {Promise} new promise
+		 */
+		Promise.prototype['else'] = Promise.prototype.orElse = function(defaultValue) {
+			return this.then(void 0, function() {
+				return defaultValue;
+			});
+		};
+
+		/**
+		 * Shortcut for .then(function() { return value; })
+		 * @param  {*} value
+		 * @return {Promise} a promise that:
+		 *  - is fulfilled if value is not a promise, or
+		 *  - if value is a promise, will fulfill with its value, or reject
+		 *    with its reason.
+		 */
+		Promise.prototype['yield'] = function(value) {
+			return this.then(function() {
+				return value;
+			});
+		};
+
+		/**
+		 * Runs a side effect when this promise fulfills, without changing the
+		 * fulfillment value.
+		 * @param {function} onFulfilledSideEffect
+		 * @returns {Promise}
+		 */
+		Promise.prototype.tap = function(onFulfilledSideEffect) {
+			return this.then(onFulfilledSideEffect)['yield'](this);
+		};
+
+		return Promise;
+	};
+
+	function rejectInvalidPredicate() {
+		throw new TypeError('catch predicate must be a function');
+	}
+
+	function evaluatePredicate(e, predicate) {
+		return isError(predicate) ? e instanceof predicate : predicate(e);
+	}
+
+	function isError(predicate) {
+		return predicate === Error
+			|| (predicate != null && predicate.prototype instanceof Error);
+	}
+
+	function maybeThenable(x) {
+		return (typeof x === 'object' || typeof x === 'function') && x !== null;
+	}
+
+	function identity(x) {
+		return x;
+	}
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+/** @author Jeff Escalante */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	return function fold(Promise) {
+
+		Promise.prototype.fold = function(f, z) {
+			var promise = this._beget();
+
+			this._handler.fold(function(z, x, to) {
+				Promise._handler(z).fold(function(x, z, to) {
+					to.resolve(f.call(this, z, x));
+				}, x, this, to);
+			}, z, promise._handler.receiver, promise._handler);
+
+			return promise;
+		};
+
+		return Promise;
+	};
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function(require) {
+
+	var inspect = __webpack_require__(8).inspect;
+
+	return function inspection(Promise) {
+
+		Promise.prototype.inspect = function() {
+			return inspect(Promise._handler(this));
+		};
+
+		return Promise;
+	};
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	return function generate(Promise) {
+
+		var resolve = Promise.resolve;
+
+		Promise.iterate = iterate;
+		Promise.unfold = unfold;
+
+		return Promise;
+
+		/**
+		 * @deprecated Use github.com/cujojs/most streams and most.iterate
+		 * Generate a (potentially infinite) stream of promised values:
+		 * x, f(x), f(f(x)), etc. until condition(x) returns true
+		 * @param {function} f function to generate a new x from the previous x
+		 * @param {function} condition function that, given the current x, returns
+		 *  truthy when the iterate should stop
+		 * @param {function} handler function to handle the value produced by f
+		 * @param {*|Promise} x starting value, may be a promise
+		 * @return {Promise} the result of the last call to f before
+		 *  condition returns true
+		 */
+		function iterate(f, condition, handler, x) {
+			return unfold(function(x) {
+				return [x, f(x)];
+			}, condition, handler, x);
+		}
+
+		/**
+		 * @deprecated Use github.com/cujojs/most streams and most.unfold
+		 * Generate a (potentially infinite) stream of promised values
+		 * by applying handler(generator(seed)) iteratively until
+		 * condition(seed) returns true.
+		 * @param {function} unspool function that generates a [value, newSeed]
+		 *  given a seed.
+		 * @param {function} condition function that, given the current seed, returns
+		 *  truthy when the unfold should stop
+		 * @param {function} handler function to handle the value produced by unspool
+		 * @param x {*|Promise} starting value, may be a promise
+		 * @return {Promise} the result of the last value produced by unspool before
+		 *  condition returns true
+		 */
+		function unfold(unspool, condition, handler, x) {
+			return resolve(x).then(function(seed) {
+				return resolve(condition(seed)).then(function(done) {
+					return done ? seed : resolve(unspool(seed)).spread(next);
+				});
+			});
+
+			function next(item, newSeed) {
+				return resolve(handler(item)).then(function() {
+					return unfold(unspool, condition, handler, newSeed);
+				});
+			}
+		}
+	};
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	return function progress(Promise) {
+
+		/**
+		 * @deprecated
+		 * Register a progress handler for this promise
+		 * @param {function} onProgress
+		 * @returns {Promise}
+		 */
+		Promise.prototype.progress = function(onProgress) {
+			return this.then(void 0, void 0, onProgress);
+		};
+
+		return Promise;
+	};
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	return function addWith(Promise) {
+		/**
+		 * Returns a promise whose handlers will be called with `this` set to
+		 * the supplied receiver.  Subsequent promises derived from the
+		 * returned promise will also have their handlers called with receiver
+		 * as `this`. Calling `with` with undefined or no arguments will return
+		 * a promise whose handlers will again be called in the usual Promises/A+
+		 * way (no `this`) thus safely undoing any previous `with` in the
+		 * promise chain.
+		 *
+		 * WARNING: Promises returned from `with`/`withThis` are NOT Promises/A+
+		 * compliant, specifically violating 2.2.5 (http://promisesaplus.com/#point-41)
+		 *
+		 * @param {object} receiver `this` value for all handlers attached to
+		 *  the returned promise.
+		 * @returns {Promise}
+		 */
+		Promise.prototype['with'] = Promise.prototype.withThis = function(receiver) {
+			var p = this._beget();
+			var child = p._handler;
+			child.receiver = receiver;
+			this._handler.chain(child, receiver);
+			return p;
+		};
+
+		return Promise;
+	};
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function(require) {
+
+	var setTimer = __webpack_require__(4).setTimer;
+	var format = __webpack_require__(40);
+
+	return function unhandledRejection(Promise) {
+
+		var logError = noop;
+		var logInfo = noop;
+		var localConsole;
+
+		if(typeof console !== 'undefined') {
+			// Alias console to prevent things like uglify's drop_console option from
+			// removing console.log/error. Unhandled rejections fall into the same
+			// category as uncaught exceptions, and build tools shouldn't silence them.
+			localConsole = console;
+			logError = typeof localConsole.error !== 'undefined'
+				? function (e) { localConsole.error(e); }
+				: function (e) { localConsole.log(e); };
+
+			logInfo = typeof localConsole.info !== 'undefined'
+				? function (e) { localConsole.info(e); }
+				: function (e) { localConsole.log(e); };
+		}
+
+		Promise.onPotentiallyUnhandledRejection = function(rejection) {
+			enqueue(report, rejection);
+		};
+
+		Promise.onPotentiallyUnhandledRejectionHandled = function(rejection) {
+			enqueue(unreport, rejection);
+		};
+
+		Promise.onFatalRejection = function(rejection) {
+			enqueue(throwit, rejection.value);
+		};
+
+		var tasks = [];
+		var reported = [];
+		var running = null;
+
+		function report(r) {
+			if(!r.handled) {
+				reported.push(r);
+				logError('Potentially unhandled rejection [' + r.id + '] ' + format.formatError(r.value));
+			}
+		}
+
+		function unreport(r) {
+			var i = reported.indexOf(r);
+			if(i >= 0) {
+				reported.splice(i, 1);
+				logInfo('Handled previous rejection [' + r.id + '] ' + format.formatObject(r.value));
+			}
+		}
+
+		function enqueue(f, x) {
+			tasks.push(f, x);
+			if(running === null) {
+				running = setTimer(flush, 0);
+			}
+		}
+
+		function flush() {
+			running = null;
+			while(tasks.length > 0) {
+				tasks.shift()(tasks.shift());
+			}
+		}
+
+		return Promise;
+	};
+
+	function throwit(e) {
+		throw e;
+	}
+
+	function noop() {}
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	return {
+		formatError: formatError,
+		formatObject: formatObject,
+		tryStringify: tryStringify
+	};
+
+	/**
+	 * Format an error into a string.  If e is an Error and has a stack property,
+	 * it's returned.  Otherwise, e is formatted using formatObject, with a
+	 * warning added about e not being a proper Error.
+	 * @param {*} e
+	 * @returns {String} formatted string, suitable for output to developers
+	 */
+	function formatError(e) {
+		var s = typeof e === 'object' && e !== null && (e.stack || e.message) ? e.stack || e.message : formatObject(e);
+		return e instanceof Error ? s : s + ' (WARNING: non-Error used)';
+	}
+
+	/**
+	 * Format an object, detecting "plain" objects and running them through
+	 * JSON.stringify if possible.
+	 * @param {Object} o
+	 * @returns {string}
+	 */
+	function formatObject(o) {
+		var s = String(o);
+		if(s === '[object Object]' && typeof JSON !== 'undefined') {
+			s = tryStringify(o, s);
+		}
+		return s;
+	}
+
+	/**
+	 * Try to return the result of JSON.stringify(x).  If that fails, return
+	 * defaultValue
+	 * @param {*} x
+	 * @param {*} defaultValue
+	 * @returns {String|*} JSON.stringify(x) or defaultValue
+	 */
+	function tryStringify(x, defaultValue) {
+		try {
+			return JSON.stringify(x);
+		} catch(e) {
+			return defaultValue;
+		}
+	}
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require) {
+
+	var makePromise = __webpack_require__(42);
+	var Scheduler = __webpack_require__(43);
+	var async = __webpack_require__(4).asap;
+
+	return makePromise({
+		scheduler: new Scheduler(async)
+	});
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+})(__webpack_require__(0));
+
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	return function makePromise(environment) {
+
+		var tasks = environment.scheduler;
+		var emitRejection = initEmitRejection();
+
+		var objectCreate = Object.create ||
+			function(proto) {
+				function Child() {}
+				Child.prototype = proto;
+				return new Child();
+			};
+
+		/**
+		 * Create a promise whose fate is determined by resolver
+		 * @constructor
+		 * @returns {Promise} promise
+		 * @name Promise
+		 */
+		function Promise(resolver, handler) {
+			this._handler = resolver === Handler ? handler : init(resolver);
+		}
+
+		/**
+		 * Run the supplied resolver
+		 * @param resolver
+		 * @returns {Pending}
+		 */
+		function init(resolver) {
+			var handler = new Pending();
+
+			try {
+				resolver(promiseResolve, promiseReject, promiseNotify);
+			} catch (e) {
+				promiseReject(e);
+			}
+
+			return handler;
+
+			/**
+			 * Transition from pre-resolution state to post-resolution state, notifying
+			 * all listeners of the ultimate fulfillment or rejection
+			 * @param {*} x resolution value
+			 */
+			function promiseResolve (x) {
+				handler.resolve(x);
+			}
+			/**
+			 * Reject this promise with reason, which will be used verbatim
+			 * @param {Error|*} reason rejection reason, strongly suggested
+			 *   to be an Error type
+			 */
+			function promiseReject (reason) {
+				handler.reject(reason);
+			}
+
+			/**
+			 * @deprecated
+			 * Issue a progress event, notifying all progress listeners
+			 * @param {*} x progress event payload to pass to all listeners
+			 */
+			function promiseNotify (x) {
+				handler.notify(x);
+			}
+		}
+
+		// Creation
+
+		Promise.resolve = resolve;
+		Promise.reject = reject;
+		Promise.never = never;
+
+		Promise._defer = defer;
+		Promise._handler = getHandler;
+
+		/**
+		 * Returns a trusted promise. If x is already a trusted promise, it is
+		 * returned, otherwise returns a new trusted Promise which follows x.
+		 * @param  {*} x
+		 * @return {Promise} promise
+		 */
+		function resolve(x) {
+			return isPromise(x) ? x
+				: new Promise(Handler, new Async(getHandler(x)));
+		}
+
+		/**
+		 * Return a reject promise with x as its reason (x is used verbatim)
+		 * @param {*} x
+		 * @returns {Promise} rejected promise
+		 */
+		function reject(x) {
+			return new Promise(Handler, new Async(new Rejected(x)));
+		}
+
+		/**
+		 * Return a promise that remains pending forever
+		 * @returns {Promise} forever-pending promise.
+		 */
+		function never() {
+			return foreverPendingPromise; // Should be frozen
+		}
+
+		/**
+		 * Creates an internal {promise, resolver} pair
+		 * @private
+		 * @returns {Promise}
+		 */
+		function defer() {
+			return new Promise(Handler, new Pending());
+		}
+
+		// Transformation and flow control
+
+		/**
+		 * Transform this promise's fulfillment value, returning a new Promise
+		 * for the transformed result.  If the promise cannot be fulfilled, onRejected
+		 * is called with the reason.  onProgress *may* be called with updates toward
+		 * this promise's fulfillment.
+		 * @param {function=} onFulfilled fulfillment handler
+		 * @param {function=} onRejected rejection handler
+		 * @param {function=} onProgress @deprecated progress handler
+		 * @return {Promise} new promise
+		 */
+		Promise.prototype.then = function(onFulfilled, onRejected, onProgress) {
+			var parent = this._handler;
+			var state = parent.join().state();
+
+			if ((typeof onFulfilled !== 'function' && state > 0) ||
+				(typeof onRejected !== 'function' && state < 0)) {
+				// Short circuit: value will not change, simply share handler
+				return new this.constructor(Handler, parent);
+			}
+
+			var p = this._beget();
+			var child = p._handler;
+
+			parent.chain(child, parent.receiver, onFulfilled, onRejected, onProgress);
+
+			return p;
+		};
+
+		/**
+		 * If this promise cannot be fulfilled due to an error, call onRejected to
+		 * handle the error. Shortcut for .then(undefined, onRejected)
+		 * @param {function?} onRejected
+		 * @return {Promise}
+		 */
+		Promise.prototype['catch'] = function(onRejected) {
+			return this.then(void 0, onRejected);
+		};
+
+		/**
+		 * Creates a new, pending promise of the same type as this promise
+		 * @private
+		 * @returns {Promise}
+		 */
+		Promise.prototype._beget = function() {
+			return begetFrom(this._handler, this.constructor);
+		};
+
+		function begetFrom(parent, Promise) {
+			var child = new Pending(parent.receiver, parent.join().context);
+			return new Promise(Handler, child);
+		}
+
+		// Array combinators
+
+		Promise.all = all;
+		Promise.race = race;
+		Promise._traverse = traverse;
+
+		/**
+		 * Return a promise that will fulfill when all promises in the
+		 * input array have fulfilled, or will reject when one of the
+		 * promises rejects.
+		 * @param {array} promises array of promises
+		 * @returns {Promise} promise for array of fulfillment values
+		 */
+		function all(promises) {
+			return traverseWith(snd, null, promises);
+		}
+
+		/**
+		 * Array<Promise<X>> -> Promise<Array<f(X)>>
+		 * @private
+		 * @param {function} f function to apply to each promise's value
+		 * @param {Array} promises array of promises
+		 * @returns {Promise} promise for transformed values
+		 */
+		function traverse(f, promises) {
+			return traverseWith(tryCatch2, f, promises);
+		}
+
+		function traverseWith(tryMap, f, promises) {
+			var handler = typeof f === 'function' ? mapAt : settleAt;
+
+			var resolver = new Pending();
+			var pending = promises.length >>> 0;
+			var results = new Array(pending);
+
+			for (var i = 0, x; i < promises.length && !resolver.resolved; ++i) {
+				x = promises[i];
+
+				if (x === void 0 && !(i in promises)) {
+					--pending;
+					continue;
+				}
+
+				traverseAt(promises, handler, i, x, resolver);
+			}
+
+			if(pending === 0) {
+				resolver.become(new Fulfilled(results));
+			}
+
+			return new Promise(Handler, resolver);
+
+			function mapAt(i, x, resolver) {
+				if(!resolver.resolved) {
+					traverseAt(promises, settleAt, i, tryMap(f, x, i), resolver);
+				}
+			}
+
+			function settleAt(i, x, resolver) {
+				results[i] = x;
+				if(--pending === 0) {
+					resolver.become(new Fulfilled(results));
+				}
+			}
+		}
+
+		function traverseAt(promises, handler, i, x, resolver) {
+			if (maybeThenable(x)) {
+				var h = getHandlerMaybeThenable(x);
+				var s = h.state();
+
+				if (s === 0) {
+					h.fold(handler, i, void 0, resolver);
+				} else if (s > 0) {
+					handler(i, h.value, resolver);
+				} else {
+					resolver.become(h);
+					visitRemaining(promises, i+1, h);
+				}
+			} else {
+				handler(i, x, resolver);
+			}
+		}
+
+		Promise._visitRemaining = visitRemaining;
+		function visitRemaining(promises, start, handler) {
+			for(var i=start; i<promises.length; ++i) {
+				markAsHandled(getHandler(promises[i]), handler);
+			}
+		}
+
+		function markAsHandled(h, handler) {
+			if(h === handler) {
+				return;
+			}
+
+			var s = h.state();
+			if(s === 0) {
+				h.visit(h, void 0, h._unreport);
+			} else if(s < 0) {
+				h._unreport();
+			}
+		}
+
+		/**
+		 * Fulfill-reject competitive race. Return a promise that will settle
+		 * to the same state as the earliest input promise to settle.
+		 *
+		 * WARNING: The ES6 Promise spec requires that race()ing an empty array
+		 * must return a promise that is pending forever.  This implementation
+		 * returns a singleton forever-pending promise, the same singleton that is
+		 * returned by Promise.never(), thus can be checked with ===
+		 *
+		 * @param {array} promises array of promises to race
+		 * @returns {Promise} if input is non-empty, a promise that will settle
+		 * to the same outcome as the earliest input promise to settle. if empty
+		 * is empty, returns a promise that will never settle.
+		 */
+		function race(promises) {
+			if(typeof promises !== 'object' || promises === null) {
+				return reject(new TypeError('non-iterable passed to race()'));
+			}
+
+			// Sigh, race([]) is untestable unless we return *something*
+			// that is recognizable without calling .then() on it.
+			return promises.length === 0 ? never()
+				 : promises.length === 1 ? resolve(promises[0])
+				 : runRace(promises);
+		}
+
+		function runRace(promises) {
+			var resolver = new Pending();
+			var i, x, h;
+			for(i=0; i<promises.length; ++i) {
+				x = promises[i];
+				if (x === void 0 && !(i in promises)) {
+					continue;
+				}
+
+				h = getHandler(x);
+				if(h.state() !== 0) {
+					resolver.become(h);
+					visitRemaining(promises, i+1, h);
+					break;
+				} else {
+					h.visit(resolver, resolver.resolve, resolver.reject);
+				}
+			}
+			return new Promise(Handler, resolver);
+		}
+
+		// Promise internals
+		// Below this, everything is @private
+
+		/**
+		 * Get an appropriate handler for x, without checking for cycles
+		 * @param {*} x
+		 * @returns {object} handler
+		 */
+		function getHandler(x) {
+			if(isPromise(x)) {
+				return x._handler.join();
+			}
+			return maybeThenable(x) ? getHandlerUntrusted(x) : new Fulfilled(x);
+		}
+
+		/**
+		 * Get a handler for thenable x.
+		 * NOTE: You must only call this if maybeThenable(x) == true
+		 * @param {object|function|Promise} x
+		 * @returns {object} handler
+		 */
+		function getHandlerMaybeThenable(x) {
+			return isPromise(x) ? x._handler.join() : getHandlerUntrusted(x);
+		}
+
+		/**
+		 * Get a handler for potentially untrusted thenable x
+		 * @param {*} x
+		 * @returns {object} handler
+		 */
+		function getHandlerUntrusted(x) {
+			try {
+				var untrustedThen = x.then;
+				return typeof untrustedThen === 'function'
+					? new Thenable(untrustedThen, x)
+					: new Fulfilled(x);
+			} catch(e) {
+				return new Rejected(e);
+			}
+		}
+
+		/**
+		 * Handler for a promise that is pending forever
+		 * @constructor
+		 */
+		function Handler() {}
+
+		Handler.prototype.when
+			= Handler.prototype.become
+			= Handler.prototype.notify // deprecated
+			= Handler.prototype.fail
+			= Handler.prototype._unreport
+			= Handler.prototype._report
+			= noop;
+
+		Handler.prototype._state = 0;
+
+		Handler.prototype.state = function() {
+			return this._state;
+		};
+
+		/**
+		 * Recursively collapse handler chain to find the handler
+		 * nearest to the fully resolved value.
+		 * @returns {object} handler nearest the fully resolved value
+		 */
+		Handler.prototype.join = function() {
+			var h = this;
+			while(h.handler !== void 0) {
+				h = h.handler;
+			}
+			return h;
+		};
+
+		Handler.prototype.chain = function(to, receiver, fulfilled, rejected, progress) {
+			this.when({
+				resolver: to,
+				receiver: receiver,
+				fulfilled: fulfilled,
+				rejected: rejected,
+				progress: progress
+			});
+		};
+
+		Handler.prototype.visit = function(receiver, fulfilled, rejected, progress) {
+			this.chain(failIfRejected, receiver, fulfilled, rejected, progress);
+		};
+
+		Handler.prototype.fold = function(f, z, c, to) {
+			this.when(new Fold(f, z, c, to));
+		};
+
+		/**
+		 * Handler that invokes fail() on any handler it becomes
+		 * @constructor
+		 */
+		function FailIfRejected() {}
+
+		inherit(Handler, FailIfRejected);
+
+		FailIfRejected.prototype.become = function(h) {
+			h.fail();
+		};
+
+		var failIfRejected = new FailIfRejected();
+
+		/**
+		 * Handler that manages a queue of consumers waiting on a pending promise
+		 * @constructor
+		 */
+		function Pending(receiver, inheritedContext) {
+			Promise.createContext(this, inheritedContext);
+
+			this.consumers = void 0;
+			this.receiver = receiver;
+			this.handler = void 0;
+			this.resolved = false;
+		}
+
+		inherit(Handler, Pending);
+
+		Pending.prototype._state = 0;
+
+		Pending.prototype.resolve = function(x) {
+			this.become(getHandler(x));
+		};
+
+		Pending.prototype.reject = function(x) {
+			if(this.resolved) {
+				return;
+			}
+
+			this.become(new Rejected(x));
+		};
+
+		Pending.prototype.join = function() {
+			if (!this.resolved) {
+				return this;
+			}
+
+			var h = this;
+
+			while (h.handler !== void 0) {
+				h = h.handler;
+				if (h === this) {
+					return this.handler = cycle();
+				}
+			}
+
+			return h;
+		};
+
+		Pending.prototype.run = function() {
+			var q = this.consumers;
+			var handler = this.handler;
+			this.handler = this.handler.join();
+			this.consumers = void 0;
+
+			for (var i = 0; i < q.length; ++i) {
+				handler.when(q[i]);
+			}
+		};
+
+		Pending.prototype.become = function(handler) {
+			if(this.resolved) {
+				return;
+			}
+
+			this.resolved = true;
+			this.handler = handler;
+			if(this.consumers !== void 0) {
+				tasks.enqueue(this);
+			}
+
+			if(this.context !== void 0) {
+				handler._report(this.context);
+			}
+		};
+
+		Pending.prototype.when = function(continuation) {
+			if(this.resolved) {
+				tasks.enqueue(new ContinuationTask(continuation, this.handler));
+			} else {
+				if(this.consumers === void 0) {
+					this.consumers = [continuation];
+				} else {
+					this.consumers.push(continuation);
+				}
+			}
+		};
+
+		/**
+		 * @deprecated
+		 */
+		Pending.prototype.notify = function(x) {
+			if(!this.resolved) {
+				tasks.enqueue(new ProgressTask(x, this));
+			}
+		};
+
+		Pending.prototype.fail = function(context) {
+			var c = typeof context === 'undefined' ? this.context : context;
+			this.resolved && this.handler.join().fail(c);
+		};
+
+		Pending.prototype._report = function(context) {
+			this.resolved && this.handler.join()._report(context);
+		};
+
+		Pending.prototype._unreport = function() {
+			this.resolved && this.handler.join()._unreport();
+		};
+
+		/**
+		 * Wrap another handler and force it into a future stack
+		 * @param {object} handler
+		 * @constructor
+		 */
+		function Async(handler) {
+			this.handler = handler;
+		}
+
+		inherit(Handler, Async);
+
+		Async.prototype.when = function(continuation) {
+			tasks.enqueue(new ContinuationTask(continuation, this));
+		};
+
+		Async.prototype._report = function(context) {
+			this.join()._report(context);
+		};
+
+		Async.prototype._unreport = function() {
+			this.join()._unreport();
+		};
+
+		/**
+		 * Handler that wraps an untrusted thenable and assimilates it in a future stack
+		 * @param {function} then
+		 * @param {{then: function}} thenable
+		 * @constructor
+		 */
+		function Thenable(then, thenable) {
+			Pending.call(this);
+			tasks.enqueue(new AssimilateTask(then, thenable, this));
+		}
+
+		inherit(Pending, Thenable);
+
+		/**
+		 * Handler for a fulfilled promise
+		 * @param {*} x fulfillment value
+		 * @constructor
+		 */
+		function Fulfilled(x) {
+			Promise.createContext(this);
+			this.value = x;
+		}
+
+		inherit(Handler, Fulfilled);
+
+		Fulfilled.prototype._state = 1;
+
+		Fulfilled.prototype.fold = function(f, z, c, to) {
+			runContinuation3(f, z, this, c, to);
+		};
+
+		Fulfilled.prototype.when = function(cont) {
+			runContinuation1(cont.fulfilled, this, cont.receiver, cont.resolver);
+		};
+
+		var errorId = 0;
+
+		/**
+		 * Handler for a rejected promise
+		 * @param {*} x rejection reason
+		 * @constructor
+		 */
+		function Rejected(x) {
+			Promise.createContext(this);
+
+			this.id = ++errorId;
+			this.value = x;
+			this.handled = false;
+			this.reported = false;
+
+			this._report();
+		}
+
+		inherit(Handler, Rejected);
+
+		Rejected.prototype._state = -1;
+
+		Rejected.prototype.fold = function(f, z, c, to) {
+			to.become(this);
+		};
+
+		Rejected.prototype.when = function(cont) {
+			if(typeof cont.rejected === 'function') {
+				this._unreport();
+			}
+			runContinuation1(cont.rejected, this, cont.receiver, cont.resolver);
+		};
+
+		Rejected.prototype._report = function(context) {
+			tasks.afterQueue(new ReportTask(this, context));
+		};
+
+		Rejected.prototype._unreport = function() {
+			if(this.handled) {
+				return;
+			}
+			this.handled = true;
+			tasks.afterQueue(new UnreportTask(this));
+		};
+
+		Rejected.prototype.fail = function(context) {
+			this.reported = true;
+			emitRejection('unhandledRejection', this);
+			Promise.onFatalRejection(this, context === void 0 ? this.context : context);
+		};
+
+		function ReportTask(rejection, context) {
+			this.rejection = rejection;
+			this.context = context;
+		}
+
+		ReportTask.prototype.run = function() {
+			if(!this.rejection.handled && !this.rejection.reported) {
+				this.rejection.reported = true;
+				emitRejection('unhandledRejection', this.rejection) ||
+					Promise.onPotentiallyUnhandledRejection(this.rejection, this.context);
+			}
+		};
+
+		function UnreportTask(rejection) {
+			this.rejection = rejection;
+		}
+
+		UnreportTask.prototype.run = function() {
+			if(this.rejection.reported) {
+				emitRejection('rejectionHandled', this.rejection) ||
+					Promise.onPotentiallyUnhandledRejectionHandled(this.rejection);
+			}
+		};
+
+		// Unhandled rejection hooks
+		// By default, everything is a noop
+
+		Promise.createContext
+			= Promise.enterContext
+			= Promise.exitContext
+			= Promise.onPotentiallyUnhandledRejection
+			= Promise.onPotentiallyUnhandledRejectionHandled
+			= Promise.onFatalRejection
+			= noop;
+
+		// Errors and singletons
+
+		var foreverPendingHandler = new Handler();
+		var foreverPendingPromise = new Promise(Handler, foreverPendingHandler);
+
+		function cycle() {
+			return new Rejected(new TypeError('Promise cycle'));
+		}
+
+		// Task runners
+
+		/**
+		 * Run a single consumer
+		 * @constructor
+		 */
+		function ContinuationTask(continuation, handler) {
+			this.continuation = continuation;
+			this.handler = handler;
+		}
+
+		ContinuationTask.prototype.run = function() {
+			this.handler.join().when(this.continuation);
+		};
+
+		/**
+		 * Run a queue of progress handlers
+		 * @constructor
+		 */
+		function ProgressTask(value, handler) {
+			this.handler = handler;
+			this.value = value;
+		}
+
+		ProgressTask.prototype.run = function() {
+			var q = this.handler.consumers;
+			if(q === void 0) {
+				return;
+			}
+
+			for (var c, i = 0; i < q.length; ++i) {
+				c = q[i];
+				runNotify(c.progress, this.value, this.handler, c.receiver, c.resolver);
+			}
+		};
+
+		/**
+		 * Assimilate a thenable, sending it's value to resolver
+		 * @param {function} then
+		 * @param {object|function} thenable
+		 * @param {object} resolver
+		 * @constructor
+		 */
+		function AssimilateTask(then, thenable, resolver) {
+			this._then = then;
+			this.thenable = thenable;
+			this.resolver = resolver;
+		}
+
+		AssimilateTask.prototype.run = function() {
+			var h = this.resolver;
+			tryAssimilate(this._then, this.thenable, _resolve, _reject, _notify);
+
+			function _resolve(x) { h.resolve(x); }
+			function _reject(x)  { h.reject(x); }
+			function _notify(x)  { h.notify(x); }
+		};
+
+		function tryAssimilate(then, thenable, resolve, reject, notify) {
+			try {
+				then.call(thenable, resolve, reject, notify);
+			} catch (e) {
+				reject(e);
+			}
+		}
+
+		/**
+		 * Fold a handler value with z
+		 * @constructor
+		 */
+		function Fold(f, z, c, to) {
+			this.f = f; this.z = z; this.c = c; this.to = to;
+			this.resolver = failIfRejected;
+			this.receiver = this;
+		}
+
+		Fold.prototype.fulfilled = function(x) {
+			this.f.call(this.c, this.z, x, this.to);
+		};
+
+		Fold.prototype.rejected = function(x) {
+			this.to.reject(x);
+		};
+
+		Fold.prototype.progress = function(x) {
+			this.to.notify(x);
+		};
+
+		// Other helpers
+
+		/**
+		 * @param {*} x
+		 * @returns {boolean} true iff x is a trusted Promise
+		 */
+		function isPromise(x) {
+			return x instanceof Promise;
+		}
+
+		/**
+		 * Test just enough to rule out primitives, in order to take faster
+		 * paths in some code
+		 * @param {*} x
+		 * @returns {boolean} false iff x is guaranteed *not* to be a thenable
+		 */
+		function maybeThenable(x) {
+			return (typeof x === 'object' || typeof x === 'function') && x !== null;
+		}
+
+		function runContinuation1(f, h, receiver, next) {
+			if(typeof f !== 'function') {
+				return next.become(h);
+			}
+
+			Promise.enterContext(h);
+			tryCatchReject(f, h.value, receiver, next);
+			Promise.exitContext();
+		}
+
+		function runContinuation3(f, x, h, receiver, next) {
+			if(typeof f !== 'function') {
+				return next.become(h);
+			}
+
+			Promise.enterContext(h);
+			tryCatchReject3(f, x, h.value, receiver, next);
+			Promise.exitContext();
+		}
+
+		/**
+		 * @deprecated
+		 */
+		function runNotify(f, x, h, receiver, next) {
+			if(typeof f !== 'function') {
+				return next.notify(x);
+			}
+
+			Promise.enterContext(h);
+			tryCatchReturn(f, x, receiver, next);
+			Promise.exitContext();
+		}
+
+		function tryCatch2(f, a, b) {
+			try {
+				return f(a, b);
+			} catch(e) {
+				return reject(e);
+			}
+		}
+
+		/**
+		 * Return f.call(thisArg, x), or if it throws return a rejected promise for
+		 * the thrown exception
+		 */
+		function tryCatchReject(f, x, thisArg, next) {
+			try {
+				next.become(getHandler(f.call(thisArg, x)));
+			} catch(e) {
+				next.become(new Rejected(e));
+			}
+		}
+
+		/**
+		 * Same as above, but includes the extra argument parameter.
+		 */
+		function tryCatchReject3(f, x, y, thisArg, next) {
+			try {
+				f.call(thisArg, x, y, next);
+			} catch(e) {
+				next.become(new Rejected(e));
+			}
+		}
+
+		/**
+		 * @deprecated
+		 * Return f.call(thisArg, x), or if it throws, *return* the exception
+		 */
+		function tryCatchReturn(f, x, thisArg, next) {
+			try {
+				next.notify(f.call(thisArg, x));
+			} catch(e) {
+				next.notify(e);
+			}
+		}
+
+		function inherit(Parent, Child) {
+			Child.prototype = objectCreate(Parent.prototype);
+			Child.prototype.constructor = Child;
+		}
+
+		function snd(x, y) {
+			return y;
+		}
+
+		function noop() {}
+
+		function hasCustomEvent() {
+			if(typeof CustomEvent === 'function') {
+				try {
+					var ev = new CustomEvent('unhandledRejection');
+					return ev instanceof CustomEvent;
+				} catch (ignoredException) {}
+			}
+			return false;
+		}
+
+		function hasInternetExplorerCustomEvent() {
+			if(typeof document !== 'undefined' && typeof document.createEvent === 'function') {
+				try {
+					// Try to create one event to make sure it's supported
+					var ev = document.createEvent('CustomEvent');
+					ev.initCustomEvent('eventType', false, true, {});
+					return true;
+				} catch (ignoredException) {}
+			}
+			return false;
+		}
+
+		function initEmitRejection() {
+			/*global process, self, CustomEvent*/
+			if(typeof process !== 'undefined' && process !== null
+				&& typeof process.emit === 'function') {
+				// Returning falsy here means to call the default
+				// onPotentiallyUnhandledRejection API.  This is safe even in
+				// browserify since process.emit always returns falsy in browserify:
+				// https://github.com/defunctzombie/node-process/blob/master/browser.js#L40-L46
+				return function(type, rejection) {
+					return type === 'unhandledRejection'
+						? process.emit(type, rejection.value, rejection)
+						: process.emit(type, rejection);
+				};
+			} else if(typeof self !== 'undefined' && hasCustomEvent()) {
+				return (function (self, CustomEvent) {
+					return function (type, rejection) {
+						var ev = new CustomEvent(type, {
+							detail: {
+								reason: rejection.value,
+								key: rejection
+							},
+							bubbles: false,
+							cancelable: true
+						});
+
+						return !self.dispatchEvent(ev);
+					};
+				}(self, CustomEvent));
+			} else if(typeof self !== 'undefined' && hasInternetExplorerCustomEvent()) {
+				return (function(self, document) {
+					return function(type, rejection) {
+						var ev = document.createEvent('CustomEvent');
+						ev.initCustomEvent(type, false, true, {
+							reason: rejection.value,
+							key: rejection
+						});
+
+						return !self.dispatchEvent(ev);
+					};
+				}(self, document));
+			}
+
+			return noop;
+		}
+
+		return Promise;
+	};
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+(function(define) { 'use strict';
+!(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+
+	// Credit to Twisol (https://github.com/Twisol) for suggesting
+	// this type of extensible queue + trampoline approach for next-tick conflation.
+
+	/**
+	 * Async task scheduler
+	 * @param {function} async function to schedule a single async function
+	 * @constructor
+	 */
+	function Scheduler(async) {
+		this._async = async;
+		this._running = false;
+
+		this._queue = this;
+		this._queueLen = 0;
+		this._afterQueue = {};
+		this._afterQueueLen = 0;
+
+		var self = this;
+		this.drain = function() {
+			self._drain();
+		};
+	}
+
+	/**
+	 * Enqueue a task
+	 * @param {{ run:function }} task
+	 */
+	Scheduler.prototype.enqueue = function(task) {
+		this._queue[this._queueLen++] = task;
+		this.run();
+	};
+
+	/**
+	 * Enqueue a task to run after the main task queue
+	 * @param {{ run:function }} task
+	 */
+	Scheduler.prototype.afterQueue = function(task) {
+		this._afterQueue[this._afterQueueLen++] = task;
+		this.run();
+	};
+
+	Scheduler.prototype.run = function() {
+		if (!this._running) {
+			this._running = true;
+			this._async(this.drain);
+		}
+	};
+
+	/**
+	 * Drain the handler queue entirely, and then the after queue
+	 */
+	Scheduler.prototype._drain = function() {
+		var i = 0;
+		for (; i < this._queueLen; ++i) {
+			this._queue[i].run();
+			this._queue[i] = void 0;
+		}
+
+		this._queueLen = 0;
+		this._running = false;
+
+		for (i = 0; i < this._afterQueueLen; ++i) {
+			this._afterQueue[i].run();
+			this._afterQueue[i] = void 0;
+		}
+
+		this._afterQueueLen = 0;
+	};
+
+	return Scheduler;
+
+}.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+}(__webpack_require__(0)));
+
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports) {
+
+module.exports = XMLHttpRequest;
+
+
+/***/ }),
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30973,8 +34416,8 @@ exports.unstable_wrap = unstable_wrap;
 
 
 
-var React = __webpack_require__(2);
-var factory = __webpack_require__(19);
+var React = __webpack_require__(3);
+var factory = __webpack_require__(46);
 
 if (typeof React === 'undefined') {
   throw Error(
@@ -30994,7 +34437,7 @@ module.exports = factory(
 
 
 /***/ }),
-/* 19 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -31008,7 +34451,7 @@ module.exports = factory(
 
 
 
-var _assign = __webpack_require__(1);
+var _assign = __webpack_require__(2);
 
 // -- Inlined from fbjs --
 
@@ -32001,10 +35444,10 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
 
 module.exports = factory;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ }),
-/* 20 */
+/* 47 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin

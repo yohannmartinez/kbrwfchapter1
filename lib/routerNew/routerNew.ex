@@ -1,5 +1,6 @@
 # defmodule Server.RouterNew do
 #   use Server.TheCreator
+
 #   my_error code: 404, content: "Custom error message"
 
 #   my_get "/" do
