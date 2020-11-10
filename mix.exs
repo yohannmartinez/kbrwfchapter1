@@ -15,7 +15,7 @@ defmodule KbrwFormation.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     [
-      applications: [:logger, :cowboy, :plug],
+      applications: [:logger, :cowboy, :plug, :inets],
       mod: {KbrwFormation, []}
     ]
   end

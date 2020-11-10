@@ -4,7 +4,7 @@ defmodule KbrwFormation do
   def start(_type, _args) do
 
     children = [
-      Plug.Adapters.Cowboy.child_spec(:http, KbrwFormation.Router, [], port: 8080),
+      Plug.Adapters.Cowboy.child_spec(:http, KbrwFormation.Router, [], port: 4001),
       # Plug.Adapters.Cowboy.child_spec(:http, KbrwFormation.RouterNew, [], port: 4001),
     ]
 

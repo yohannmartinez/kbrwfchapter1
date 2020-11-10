@@ -1,6 +1,7 @@
 defmodule KbrwFormation.Supervisor do
     use Supervisor
     alias KbrwFormation.Database
+    alias KbrwFormation.Riak
 
     def start_link do
         Supervisor.start_link(__MODULE__, [])
@@ -8,7 +9,8 @@ defmodule KbrwFormation.Supervisor do
 
     def init(_) do
         children = [
-            worker(Database, [])
+            worker(Database, []),
+            worker(Riak, []),
         ]
 
         supervise(children, strategy: :one_for_one)
