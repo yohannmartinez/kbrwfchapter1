@@ -86,11 +86,6 @@
       }
       
       .div-global-button {
-        position: absolute;
-        left: 0%;
-        top: auto;
-        right: 0%;
-        bottom: 0px;
         display: -webkit-box;
         display: -webkit-flex;
         display: -ms-flexbox;
@@ -104,7 +99,11 @@
       }
       
       .text-block {
-        display: inline;
+        display: flex;
+      }
+
+      .page-number{
+        margin:0 0.4em;
       }
       
       .header {

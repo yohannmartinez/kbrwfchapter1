@@ -63,20 +63,20 @@ var Layout = createReactClass({
   }
 })
 
-var cn = function(){
+var cn = function () {
   var args = arguments, classes = {}
   for (var i in args) {
     var arg = args[i]
-    if(!arg) continue
+    if (!arg) continue
     if ('string' === typeof arg || 'number' === typeof arg) {
-      arg.split(" ").filter((c)=> c!="").map((c)=>{
+      arg.split(" ").filter((c) => c != "").map((c) => {
         classes[c] = true
       })
     } else if ('object' === typeof arg) {
       for (var key in arg) classes[key] = arg[key]
     }
   }
-  return Object.keys(classes).map((k)=> classes[k] && k || '').join(' ')
+  return Object.keys(classes).map((k) => classes[k] && k || '').join(' ')
 }
 
 var DeleteModal = createReactClass({
@@ -86,10 +86,10 @@ var DeleteModal = createReactClass({
       <Z sel=".modal-text">
         {this.props.message}
       </Z>
-      <Z sel=".modal-confirm-button" onClick={()=>{this.props.callback(true)}}>
+      <Z sel=".modal-confirm-button" onClick={() => { this.props.callback(true) }}>
         yes delete it !
       </Z>
-      <Z sel=".modal-cancel-button" onClick={()=>{this.props.callback(false)}}>
+      <Z sel=".modal-cancel-button" onClick={() => { this.props.callback(false) }}>
         no, go back
       </Z>
     </JSXZ>
@@ -101,7 +101,7 @@ var DeleteModal = createReactClass({
 var Search = createReactClass({
   render() {
     return <JSXZ in="orders" sel=".div-global-search">
-      <Z sel=".div-search">
+      <Z sel=".div-search" onSubmit={(e) => { e.preventDefault(); window.location.href = `/?page=0&rows=30&sort=creation_date_int&${document.getElementById("Search").value}` }}>
         <ChildrenZ />
       </Z>
     </JSXZ>
@@ -122,10 +122,22 @@ var Header = createReactClass({
 })
 
 var Bottom = createReactClass({
+  range(array, showedNumber) {
+    const range = [];
+
+    for(let i = 0; i < Math.ceil(array / showedNumber); i++){
+      range.push(i + 1);
+    }
+
+    return range
+  },
   render() {
+    let range = this.range(this.props.orders.value.response.numFound, Number(this.props.qs.rows))
     return <JSXZ in="orders" sel=".div-global-button">
-      <Z sel=".div-bottom">
-        <ChildrenZ />
+      <Z sel=".pages-container">
+        {range.map((page,index)=>(
+          <div className="page-number" style={{color : Number(this.props.qs.page) === index ? "red" : "black"}} onClick={()=>{GoTo("orders","", {page : String(index), rows : this.props.qs.rows, sort : this.props.qs.sort})}}>{page}</div>
+        ))}
       </Z>
     </JSXZ>
   }
@@ -183,6 +195,7 @@ var remoteProps = {
     // var qs = { ...props.qs, user_id: props.user.value.id }
     var qs = { ...props.qs }
     var query = Qs.stringify(qs)
+    console.log("query are", query)
     return {
       url: "/api/orders" + (query == '' ? '' : '?' + query),
       prop: "orders"
@@ -259,15 +272,15 @@ var Orders = createReactClass({
     remoteProps: [remoteProps.orders]
   },
   render() {
-    console.log("in orders props are", this.props)
+    console.log("link is http://localhost:4001/?page=0&rows=30&sort=creation_date_index")
     return (
       <JSXZ in="orders" sel=".orders">
         <Z sel=".table-body">
-          {this.props.orders.value.map(order => (<JSXZ in="orders" sel=".table-line" >
-            <Z sel=".table-col1">{order.remoteid}</Z>
-            <Z sel=".table-col2">{order.custom.customer.full_name}</Z>
-            <Z sel=".table-col3">{order.custom.billing_address}</Z>
-            <Z sel=".table-col4">{order.items}</Z>
+          {this.props.orders.value.response.docs.map(order => (<JSXZ in="orders" sel=".table-line" >
+            <Z sel=".table-col1">{order._yz_rk}</Z>
+            <Z sel=".table-col2">{order["custom.customer.full_name"]}</Z>
+            <Z sel=".table-col3">{order["custom.customer.last_name"]}</Z>
+            <Z sel=".table-col4">{order.creation_date_int}</Z>
             <Z sel=".table-col5" onClick={() => { GoTo("order", order.remoteid) }}>{"->"}</Z>
             <Z sel=".table-col6" onClick={() => {
               this.props.modal({
@@ -277,9 +290,9 @@ var Orders = createReactClass({
                 callback: (reload) => {
                   console.log("callback", reload)
                   //Do something with the return value
-                  if(reload) {
-                    HTTP.delete("/api/order/delete/" + order.remoteid).then((result)=>{
-                      GoTo("orders")
+                  if (reload) {
+                    HTTP.delete("/api/order/delete/" + order.remoteid).then((result) => {
+                      GoTo("/")
                     })
                   }
                 }
@@ -315,9 +328,10 @@ var Order = createReactClass({
 var browserState = { Child: Child }
 
 var GoTo = (route, params, query) => {
-  console.log("GO TO CALLED !!!")
+  console.log("GO TO CALLED !!!", "route is", route, "params are", params, "query is", Qs.stringify(query))
   var qs = Qs.stringify(query)
-  var url = routes[route].path(params) + ((qs=='') ? '' : ('?'+qs))
+  console.log("query of goto is", qs)
+  var url = routes[route].path(params) + ((qs == '') ? '' : ('?' + qs))
   console.log(url)
   history.pushState({}, "", url)
   onPathChange()

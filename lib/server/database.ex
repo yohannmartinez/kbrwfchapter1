@@ -28,9 +28,13 @@ defmodule KbrwFormation.Database do
     end
   end
 
-  def getAll do
-    orders = :ets.tab2list(:wrapper)
-    Enum.map(orders, fn {_key, value} -> value end)
+  def getAll(searchParams) do
+    query = Enum.filter(searchParams, fn{key,_value} -> key !== "rows" && key !== "page" && key !== "sort" end) |> Enum.map(fn{key, val} -> "#{key}:%22#{val}%22" end) |> Enum.join("%20AND%20")
+    case query do
+      "" -> KbrwFormation.Riak.search("orders", "_yz_rb:%22orders%22",  String.to_integer(searchParams["page"]), String.to_integer(searchParams["rows"]), searchParams["sort"])
+      _ -> KbrwFormation.Riak.search("orders", query,  String.to_integer(searchParams["page"]), String.to_integer(searchParams["rows"]), searchParams["sort"])
+    end
+
   end
 
   def put(key, value) do
@@ -64,4 +68,5 @@ defmodule KbrwFormation.Database do
 
     Enum.count(check) == Enum.count(filters)
   end
+
 end

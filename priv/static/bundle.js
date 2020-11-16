@@ -803,29 +803,6 @@ var Layout = createReactClass({
     var props = _extends({}, this.props, { modal: this.modal
     });
 
-    var cn = function cn() {
-      var args = arguments,
-          classes = {};
-      for (var i in args) {
-        var arg = args[i];
-        if (!arg) continue;
-        if ('string' === typeof arg || 'number' === typeof arg) {
-          arg.split(" ").filter(function (c) {
-            return c != "";
-          }).map(function (c) {
-            classes[c] = true;
-          });
-        } else if ('object' === (typeof arg === 'undefined' ? 'undefined' : _typeof(arg))) {
-          for (var key in arg) {
-            classes[key] = arg[key];
-          }
-        }
-      }
-      return Object.keys(classes).map(function (k) {
-        return classes[k] && k || '';
-      }).join(' ');
-    };
-
     return React.createElement(
       'div',
       {
@@ -850,6 +827,29 @@ var Layout = createReactClass({
     );
   }
 });
+
+var cn = function cn() {
+  var args = arguments,
+      classes = {};
+  for (var i in args) {
+    var arg = args[i];
+    if (!arg) continue;
+    if ('string' === typeof arg || 'number' === typeof arg) {
+      arg.split(" ").filter(function (c) {
+        return c != "";
+      }).map(function (c) {
+        classes[c] = true;
+      });
+    } else if ('object' === (typeof arg === 'undefined' ? 'undefined' : _typeof(arg))) {
+      for (var key in arg) {
+        classes[key] = arg[key];
+      }
+    }
+  }
+  return Object.keys(classes).map(function (k) {
+    return classes[k] && k || '';
+  }).join(' ');
+};
 
 var DeleteModal = createReactClass({
   displayName: 'DeleteModal',
@@ -913,8 +913,10 @@ var Search = createReactClass({
           id: 'email-form',
           name: 'email-form',
           'data-name': 'Email Form',
-          className: 'form div-search'
-        },
+          className: 'form div-search',
+          onSubmit: function onSubmit(e) {
+            e.preventDefault();window.location.href = '/?page=0&rows=30&sort=creation_date_int&' + document.getElementById("Search").value;
+          } },
         React.createElement('input', {
           type: 'text',
           className: 'text-field search-input w-input',
@@ -1009,7 +1011,19 @@ var Header = createReactClass({
 
 var Bottom = createReactClass({
   displayName: 'Bottom',
+  range: function range(array, showedNumber) {
+    var range = [];
+
+    for (var i = 0; i < Math.ceil(array / showedNumber); i++) {
+      range.push(i + 1);
+    }
+
+    return range;
+  },
   render: function render() {
+    var _this3 = this;
+
+    var range = this.range(this.props.orders.value.response.numFound, Number(this.props.qs.rows));
     return React.createElement(
       'div',
       {
@@ -1023,15 +1037,17 @@ var Bottom = createReactClass({
         React.createElement(
           'div',
           {
-            className: 'text-block'
+            className: 'text-block pages-container'
           },
-          '1 2\xA0',
-          React.createElement(
-            'strong',
-            null,
-            '3'
-          ),
-          ' 4\xA05'
+          range.map(function (page, index) {
+            return React.createElement(
+              'div',
+              { className: 'page-number', style: { color: Number(_this3.props.qs.page) === index ? "red" : "black" }, onClick: function onClick() {
+                  GoTo("orders", "", { page: String(index), rows: _this3.props.qs.rows, sort: _this3.props.qs.sort });
+                } },
+              page
+            );
+          })
         )
       )
     );
@@ -1103,6 +1119,7 @@ var remoteProps = {
     // var qs = { ...props.qs, user_id: props.user.value.id }
     var qs = _extends({}, props.qs);
     var query = Qs.stringify(qs);
+    console.log("query are", query);
     return {
       url: "/api/orders" + (query == '' ? '' : '?' + query),
       prop: "orders"
@@ -1160,19 +1177,19 @@ function addRemoteProps(props) {
 }
 
 var HTTP = new function () {
-  var _this3 = this;
+  var _this4 = this;
 
   this.get = function (url) {
-    return _this3.req('GET', url);
+    return _this4.req('GET', url);
   };
   this.delete = function (url) {
-    return _this3.req('DELETE', url);
+    return _this4.req('DELETE', url);
   };
   this.post = function (url, data) {
-    return _this3.req('POST', url, data);
+    return _this4.req('POST', url, data);
   };
   this.put = function (url, data) {
-    return _this3.req('PUT', url, data);
+    return _this4.req('PUT', url, data);
   };
 
   this.req = function (method, url, data) {
@@ -1204,7 +1221,7 @@ var Orders = createReactClass({
     remoteProps: [remoteProps.orders]
   },
   render: function render() {
-    var _this4 = this;
+    var _this5 = this;
 
     console.log("in orders props are", this.props);
     return React.createElement(
@@ -1306,7 +1323,7 @@ var Orders = createReactClass({
           {
             className: 'table-body'
           },
-          this.props.orders.value.map(function (order) {
+          this.props.orders.value.response.docs.map(function (order) {
             return React.createElement(
               'div',
               {
@@ -1317,28 +1334,28 @@ var Orders = createReactClass({
                 {
                   className: 'table-col1'
                 },
-                order.remoteid
+                order._yz_rk
               ),
               React.createElement(
                 'div',
                 {
                   className: 'table-col2'
                 },
-                order.custom.customer.full_name
+                order["custom.customer.full_name"]
               ),
               React.createElement(
                 'div',
                 {
                   className: 'table-col3'
                 },
-                order.custom.billing_address
+                order["custom.customer.last_name"]
               ),
               React.createElement(
                 'div',
                 {
                   className: 'table-col4'
                 },
-                order.items
+                order.creation_date_int
               ),
               React.createElement(
                 'div',
@@ -1354,7 +1371,7 @@ var Orders = createReactClass({
                 {
                   className: 'table-col6',
                   onClick: function onClick() {
-                    _this4.props.modal({
+                    _this5.props.modal({
                       type: 'delete',
                       title: 'Order deletion',
                       message: 'Are you sure you want to delete this ?',
@@ -1363,7 +1380,7 @@ var Orders = createReactClass({
                         //Do something with the return value
                         if (reload) {
                           HTTP.delete("/api/order/delete/" + order.remoteid).then(function (result) {
-                            GoTo("orders");
+                            GoTo("/");
                           });
                         }
                       }
@@ -1464,8 +1481,9 @@ var Order = createReactClass({
 var browserState = { Child: Child };
 
 var GoTo = function GoTo(route, params, query) {
-  console.log("GO TO CALLED !!!");
+  console.log("GO TO CALLED !!!", "route is", route, "params are", params, "query is", Qs.stringify(query));
   var qs = Qs.stringify(query);
+  console.log("query of goto is", qs);
   var url = routes[route].path(params) + (qs == '' ? '' : '?' + qs);
   console.log(url);
   history.pushState({}, "", url);

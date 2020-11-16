@@ -8,7 +8,9 @@ defmodule KbrwFormation.Router do
   plug(:dispatch)
 
   get "/api/orders" do
-    result = Database.getAll()
+    # request should look like this localhost:4001/api/orders?sort=creation_date_index&page=3&rows=30&type=nat_order
+    conn = fetch_query_params(conn)
+    result = Database.getAll(conn.params)
     send_resp(conn, 200, Poison.encode!(result))
   end
 
