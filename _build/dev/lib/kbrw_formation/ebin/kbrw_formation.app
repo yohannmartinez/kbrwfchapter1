@@ -3,7 +3,6 @@
               {description,"kbrw_formation"},
               {modules,['Elixir.JsonLoader','Elixir.KbrwFormation',
                         'Elixir.KbrwFormation.Database',
-                        'Elixir.KbrwFormation.Database 2',
                         'Elixir.KbrwFormation.Riak',
                         'Elixir.KbrwFormation.Router',
                         'Elixir.KbrwFormation.Supervisor']},

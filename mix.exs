@@ -7,7 +7,9 @@ defmodule KbrwFormation.Mixfile do
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps()]
+     deps: deps(),
+     compilers: [:reaxt_webpack] ++ Mix.compilers
+    ]
   end
 
   # Configuration for the OTP application
@@ -15,7 +17,7 @@ defmodule KbrwFormation.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     [
-      applications: [:logger, :cowboy, :plug, :inets],
+      applications: [:logger, :cowboy, :plug, :inets, :reaxt],
       mod: {KbrwFormation, []}
     ]
   end
@@ -31,9 +33,10 @@ defmodule KbrwFormation.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:poison, "~> 3.1"},
-      {:cowboy, "~> 1.1.2"},
-      {:plug, "~> 1.3.4"},
+      {:poison, "~> 2.1.0"},
+      {:cowboy, "~> 1.0.0"},
+      {:plug, "~> 1.3.4"},      
+      {:reaxt, github: "kbrw/reaxt", tag: "2.1.0"},
     ]
   end
 end
