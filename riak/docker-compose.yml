@@ -25,6 +25,7 @@ services:
     environment:
       - CLUSTER_NAME=riakkv
       - COORDINATOR_NODE=coordinator
+      - WAIT_FOR_ERLANG=120
 
 volumes:
   schemas:

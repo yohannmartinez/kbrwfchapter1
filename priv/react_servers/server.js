@@ -10766,73 +10766,156 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
 
-__webpack_require__(196);
-__webpack_require__(197);
-__webpack_require__(198);
-
-/* required library for our React app */
-var ReactDOM = __webpack_require__(199);
+var ReactDOM = __webpack_require__(196);
 var React = __webpack_require__(91);
-var Qs = __webpack_require__(207);
-var Cookie = __webpack_require__(211);
-var When = __webpack_require__(212);
-var XMLHttpRequest = __webpack_require__(226);
-var createReactClass = __webpack_require__(231);
+var Qs = __webpack_require__(204);
+var Cookie = __webpack_require__(208);
+var localhost = __webpack_require__(209).localhost;
+var When = __webpack_require__(210);
+var XMLHttpRequest = __webpack_require__(224);
+var createReactClass = __webpack_require__(229);
 
-var orders = [{ remoteid: "000000189", custom: { customer: { full_name: "TOTO & CIE" }, billing_address: "Some where in the world" }, items: 2 }, { remoteid: "000000190", custom: { customer: { full_name: "Looney Toons" }, billing_address: "The Warner Bros Company" }, items: 3 }, { remoteid: "000000191", custom: { customer: { full_name: "Asterix & Obelix" }, billing_address: "Armorique" }, items: 29 }, { remoteid: "000000192", custom: { customer: { full_name: "Lucky Luke" }, billing_address: "A Cowboy doesn't have an address. Sorry" }, items: 0 }];
+__webpack_require__(230);
 
-var Layout = createReactClass({
-  displayName: 'Layout',
+var browserState = {};
 
-  getInitialState: function getInitialState() {
-    return { modal: this.props.modal };
-  },
+var HTTP = new function () {
+  var _this = this;
 
-  modal: function modal(modal_data) {
-    var _this = this;
+  this.get = function (url) {
+    return _this.req('GET', url);
+  };
+  this.delete = function (url) {
+    return _this.req('DELETE', url);
+  };
+  this.post = function (url, data) {
+    return _this.req('POST', url, data);
+  };
+  this.put = function (url, data) {
+    return _this.req('PUT', url, data);
+  };
 
-    this.setState({
-      modal: _extends({}, modal_data, { callback: function callback(res) {
-          _this.setState({ modal: null }, function () {
-            if (modal_data.callback) modal_data.callback(res);
-          });
+  this.req = function (method, url, data) {
+    return new Promise(function (resolve, reject) {
+      var req = new XMLHttpRequest();
+      url = typeof window !== 'undefined' ? url : localhost + url;
+      req.open(method, url);
+      req.responseType = "text";
+      req.setRequestHeader("accept", "application/json,*/*;0.8");
+      req.setRequestHeader("content-type", "application/json");
+      req.onload = function () {
+        if (req.status >= 200 && req.status < 300) {
+          resolve(req.responseText && JSON.parse(req.responseText));
+        } else {
+          reject({ http_code: req.status });
         }
-      })
+      };
+      req.onerror = function (err) {
+        reject({ http_code: req.status });
+      };
+      req.send(data && JSON.stringify(data));
     });
+  };
+}();
+
+var routes = {
+  "orders": {
+    path: function path(params) {
+      return "/";
+    },
+    match: function match(path, qs) {
+      return path == "/" && { handlerPath: [Layout, Header, Orders] };
+    }
   },
-  render: function render() {
-    var modal_component = {
-      'delete': function _delete(props) {
-        return React.createElement(DeleteModal, props);
-      }
-    }[this.state.modal && this.state.modal.type];
-    modal_component = modal_component && modal_component(this.state.modal);
+  "order": {
+    path: function path(params) {
+      return "/order/" + params;
+    },
+    match: function match(path, qs) {
+      var r = new RegExp("/order/([^/]*)$").exec(path);
+      return r && { handlerPath: [LayoutOrder, Order], order_id: r[1] };
+    }
+  }
+};
 
-    var props = _extends({}, this.props, { modal: this.modal
-    });
+var remoteProps = {
+  // user: (props)=>{
+  //   return {
+  //     url: "/api/me",
+  //     prop: "user"
+  //   }
+  // },
+  orders: function orders(props) {
+    // if (!props.user)
+    //   return
+    // var qs = { ...props.qs, user_id: props.user.value.id }
+    var qs = _extends({}, props.qs);
+    var query = Qs.stringify(qs);
+    console.log("query are", query);
+    return {
+      url: "/api/orders" + (query == '' ? '' : '?' + query),
+      prop: "orders"
+    };
+  },
+  order: function order(props) {
+    return {
+      url: "/api/order/" + props.order_id,
+      prop: "order"
+    };
+  }
+};
 
-    return React.createElement(
-      'div',
-      {
-        className: 'layout',
-        onClick: function onClick() {
-          console.log(modal_component);
-        } },
-      React.createElement(
-        'div',
-        { className: cn('modal-wrapper', { 'hidden': !modal_component }) },
-        modal_component
-      ),
-      React.createElement(
-        'div',
-        {
-          className: 'layout-container'
-        },
-        React.createElement(Search, this.props),
-        React.createElement(Header, props),
-        React.createElement(Bottom, this.props)
-      )
+function addRemoteProps(props) {
+  console.log("addRemoteProps", props);
+  return new Promise(function (resolve, reject) {
+    var remoteProps = Array.prototype.concat.apply([], props.handlerPath.map(function (c) {
+      return c.remoteProps;
+    }) // -> [[remoteProps.user], [remoteProps.orders], null]
+    .filter(function (p) {
+      return p;
+    }) // -> [[remoteProps.user], [remoteProps.orders]]
     );
+
+    var remoteProps = remoteProps.map(function (spec_fun) {
+      return spec_fun(props);
+    }) // -> 1st call [{url: '/api/me', prop: 'user'}, undefined]
+    // -> 2nd call [{url: '/api/me', prop: 'user'}, {url: '/api/orders?user_id=123', prop: 'orders'}]
+    .filter(function (specs) {
+      return specs;
+    }) // get rid of undefined from remoteProps that don't match their dependencies
+    .filter(function (specs) {
+      return !props[specs.prop] || props[specs.prop].url != specs.url;
+    }); // get rid of remoteProps already resolved with the url
+    if (remoteProps.length == 0) {
+      return resolve(props);
+    }
+
+    var promise = When.map( // Returns a Promise that either on a list of resolved remoteProps, or on the rejected value by the first fetch who failed 
+    remoteProps.map(function (spec) {
+      // Returns a list of Promises that resolve on list of resolved remoteProps ([{url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'}])
+      return HTTP.get(spec.url).then(function (result) {
+        spec.value = result;return spec;
+      }); // we want to keep the url in the value resolved by the promise here. spec = {url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'} 
+    }));
+
+    When.reduce(promise, function (acc, spec) {
+      // {url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'}
+      acc[spec.prop] = { url: spec.url, value: spec.value };
+      return acc;
+    }, props).then(function (newProps) {
+      addRemoteProps(newProps).then(resolve, reject);
+    }, reject);
+  });
+}
+
+var Child = createReactClass({
+  displayName: 'Child',
+  render: function render() {
+    var _props$handlerPath = _toArray(this.props.handlerPath),
+        ChildHandler = _props$handlerPath[0],
+        rest = _props$handlerPath.slice(1);
+
+    return React.createElement(ChildHandler, _extends({}, this.props, { handlerPath: rest }));
   }
 });
 
@@ -10859,10 +10942,63 @@ var cn = function cn() {
   }).join(' ');
 };
 
+var Layout = createReactClass({
+  displayName: 'Layout',
+
+  getInitialState: function getInitialState() {
+    return { modal: this.props.modal };
+  },
+
+  modal: function modal(modal_data) {
+    var _this2 = this;
+
+    this.setState({
+      modal: _extends({}, modal_data, { callback: function callback(res) {
+          _this2.setState({ modal: null }, function () {
+            if (modal_data.callback) modal_data.callback(res);
+          });
+        }
+      })
+    });
+  },
+  render: function render() {
+    var modal_component = {
+      'delete': function _delete(props) {
+        return React.createElement(DeleteModal, props);
+      }
+    }[this.state.modal && this.state.modal.type];
+    modal_component = modal_component && modal_component(this.state.modal);
+
+    var props = _extends({}, this.props, { modal: this.modal
+    });
+
+    return React.createElement(
+      'div',
+      {
+        className: 'layout'
+      },
+      React.createElement(
+        'div',
+        { className: cn('modal-wrapper', { 'hidden': !modal_component }) },
+        modal_component
+      ),
+      React.createElement(
+        'div',
+        {
+          className: 'layout-container'
+        },
+        React.createElement(Search, this.props),
+        React.createElement(Header, props),
+        React.createElement(Bottom, this.props)
+      )
+    );
+  }
+});
+
 var DeleteModal = createReactClass({
   displayName: 'DeleteModal',
   render: function render() {
-    var _this2 = this;
+    var _this3 = this;
 
     console.log("i am the delete modal and my props are", this.props);
     return React.createElement(
@@ -10888,7 +11024,7 @@ var DeleteModal = createReactClass({
             href: '#',
             className: 'modal-button modal-confirm-button w-button',
             onClick: function onClick() {
-              _this2.props.callback(true);
+              _this3.props.callback(true);
             } },
           'yes delete it !'
         ),
@@ -10898,7 +11034,7 @@ var DeleteModal = createReactClass({
             href: '#',
             className: 'modal-button modal-cancel-button w-button',
             onClick: function onClick() {
-              _this2.props.callback(false);
+              _this3.props.callback(false);
             } },
           'no, go back'
         )
@@ -11029,7 +11165,7 @@ var Bottom = createReactClass({
     return range;
   },
   render: function render() {
-    var _this3 = this;
+    var _this4 = this;
 
     var range = this.range(this.props.orders.value.response.numFound, Number(this.props.qs.rows));
     return React.createElement(
@@ -11050,8 +11186,8 @@ var Bottom = createReactClass({
           range.map(function (page, index) {
             return React.createElement(
               'div',
-              { className: 'page-number', style: { color: Number(_this3.props.qs.page) === index ? "red" : "black" }, onClick: function onClick() {
-                  GoTo("orders", "", { page: String(index), rows: _this3.props.qs.rows, sort: _this3.props.qs.sort });
+              { className: 'page-number', style: { color: Number(_this4.props.qs.page) === index ? "red" : "black" }, onClick: function onClick() {
+                  _this4.props.Link.GoTo("orders", "", { page: String(index), rows: _this4.props.qs.rows, sort: _this4.props.qs.sort });
                 } },
               page
             );
@@ -11080,147 +11216,6 @@ var LayoutOrder = createReactClass({
     );
   }
 });
-
-var Child = createReactClass({
-  displayName: 'Child',
-  render: function render() {
-    var _props$handlerPath = _toArray(this.props.handlerPath),
-        ChildHandler = _props$handlerPath[0],
-        rest = _props$handlerPath.slice(1);
-
-    return React.createElement(ChildHandler, _extends({}, this.props, { handlerPath: rest }));
-  }
-});
-
-var routes = {
-  "orders": {
-    path: function path(params) {
-      return "/";
-    },
-    match: function match(path, qs) {
-      console.log("route is orders");
-      return path == "/" && { handlerPath: [Layout, Header, Orders] };
-    }
-  },
-  "order": {
-    path: function path(params) {
-      return "/order/" + params;
-    },
-    match: function match(path, qs) {
-      var r = new RegExp("/order/([^/]*)$").exec(path);
-      console.log("path of order is", r);
-      return r && { handlerPath: [LayoutOrder, Order], order_id: r[1] };
-    }
-  }
-};
-
-var remoteProps = {
-  // user: (props)=>{
-  //   return {
-  //     url: "/api/me",
-  //     prop: "user"
-  //   }
-  // },
-  orders: function orders(props) {
-    // if (!props.user)
-    //   return
-    // var qs = { ...props.qs, user_id: props.user.value.id }
-    var qs = _extends({}, props.qs);
-    var query = Qs.stringify(qs);
-    console.log("query are", query);
-    return {
-      url: "/api/orders" + (query == '' ? '' : '?' + query),
-      prop: "orders"
-    };
-  },
-  order: function order(props) {
-    return {
-      url: "/api/order/" + props.order_id,
-      prop: "order"
-    };
-  }
-};
-
-function addRemoteProps(props) {
-  console.log("addRemoteProps", props);
-  return new Promise(function (resolve, reject) {
-    var remoteProps = Array.prototype.concat.apply([], props.handlerPath.map(function (c) {
-      return c.remoteProps;
-    }) // -> [[remoteProps.user], [remoteProps.orders], null]
-    .filter(function (p) {
-      return p;
-    }) // -> [[remoteProps.user], [remoteProps.orders]]
-    );
-
-    var remoteProps = remoteProps.map(function (spec_fun) {
-      return spec_fun(props);
-    }) // -> 1st call [{url: '/api/me', prop: 'user'}, undefined]
-    // -> 2nd call [{url: '/api/me', prop: 'user'}, {url: '/api/orders?user_id=123', prop: 'orders'}]
-    .filter(function (specs) {
-      return specs;
-    }) // get rid of undefined from remoteProps that don't match their dependencies
-    .filter(function (specs) {
-      return !props[specs.prop] || props[specs.prop].url != specs.url;
-    }); // get rid of remoteProps already resolved with the url
-    if (remoteProps.length == 0) {
-      return resolve(props);
-    }
-
-    var promise = When.map( // Returns a Promise that either on a list of resolved remoteProps, or on the rejected value by the first fetch who failed 
-    remoteProps.map(function (spec) {
-      // Returns a list of Promises that resolve on list of resolved remoteProps ([{url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'}])
-      return HTTP.get(spec.url).then(function (result) {
-        spec.value = result;return spec;
-      }); // we want to keep the url in the value resolved by the promise here. spec = {url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'} 
-    }));
-
-    When.reduce(promise, function (acc, spec) {
-      // {url: '/api/me', value: {name: 'Guillaume'}, prop: 'user'}
-      acc[spec.prop] = { url: spec.url, value: spec.value };
-      return acc;
-    }, props).then(function (newProps) {
-      addRemoteProps(newProps).then(resolve, reject);
-    }, reject);
-  });
-}
-
-var HTTP = new function () {
-  var _this4 = this;
-
-  this.get = function (url) {
-    return _this4.req('GET', url);
-  };
-  this.delete = function (url) {
-    return _this4.req('DELETE', url);
-  };
-  this.post = function (url, data) {
-    return _this4.req('POST', url, data);
-  };
-  this.put = function (url, data) {
-    return _this4.req('PUT', url, data);
-  };
-
-  this.req = function (method, url, data) {
-    return new Promise(function (resolve, reject) {
-      var req = new XMLHttpRequest();
-      req.open(method, url);
-      req.responseType = "text";
-      req.setRequestHeader("accept", "application/json,*/*;0.8");
-      req.setRequestHeader("content-type", "application/json");
-      req.onload = function () {
-        if (req.status >= 200 && req.status < 300) {
-          resolve(req.responseText && JSON.parse(req.responseText));
-        } else {
-          reject({ http_code: req.status });
-        }
-      };
-      req.onerror = function (err) {
-        reject({ http_code: req.status });
-      };
-      req.send(data && JSON.stringify(data));
-    });
-  };
-}();
 
 var Orders = createReactClass({
   displayName: 'Orders',
@@ -11370,7 +11365,7 @@ var Orders = createReactClass({
                 {
                   className: 'table-col5',
                   onClick: function onClick() {
-                    GoTo("order", order.remoteid);
+                    _this5.props.Link.GoTo("order", order._yz_rk);
                   } },
                 "->"
               ),
@@ -11379,22 +11374,11 @@ var Orders = createReactClass({
                 {
                   className: 'table-col6',
                   onClick: function onClick() {
-                    _this5.props.modal({
-                      type: 'delete',
-                      title: 'Order deletion',
-                      message: 'Are you sure you want to delete this ?',
-                      callback: function callback(reload) {
-                        console.log("callback", reload);
-                        //Do something with the return value
-                        if (reload) {
-                          HTTP.delete("/api/order/delete/" + order.remoteid).then(function (result) {
-                            GoTo("/");
-                          });
-                        }
-                      }
+                    HTTP.post("/api/order/pay", order).then(function (res) {
+                      console.log(res);
                     });
                   } },
-                'delete'
+                'pay'
               )
             );
           })
@@ -11470,7 +11454,7 @@ var Order = createReactClass({
               className: 'order-infos address'
             },
             'address: ',
-            this.props.order.value.custom.billing_address
+            this.props.order.value.custom.billing_address.city
           ),
           React.createElement(
             'div',
@@ -11486,66 +11470,114 @@ var Order = createReactClass({
   }
 });
 
-var browserState = { Child: Child };
+var ErrorPage = createReactClass({
+  displayName: 'ErrorPage',
+  render: function render() {
+    return React.createElement(
+      'h1',
+      null,
+      this.props.code + " " + this.props.message
+    );
+  }
+});
 
-var GoTo = function GoTo(route, params, query) {
-  console.log("GO TO CALLED !!!", "route is", route, "params are", params, "query is", Qs.stringify(query));
-  var qs = Qs.stringify(query);
-  console.log("query of goto is", qs);
-  var url = routes[route].path(params) + (qs == '' ? '' : '?' + qs);
-  console.log(url);
-  history.pushState({}, "", url);
-  onPathChange();
-};
+var Link = createReactClass({
+  displayName: 'Link',
 
-function onPathChange() {
-  console.log("onPathChange !!!!");
-  var path = location.pathname;
-  var qs = Qs.parse(location.search.slice(1));
-  var cookies = Cookie.parse(document.cookie);
-  console.log(path, qs, cookies);
+  statics: {
+    renderFunc: null, //render function to use (differently set depending if we are server sided or client sided)
+    GoTo: function GoTo(route, params, query) {
+      // function used to change the path of our browser
+      var path = routes[route].path(params);
+      var qs = Qs.stringify(query);
+      var url = path + (qs == '' ? '' : '?' + qs);
+      history.pushState({}, "", url);
+      Link.onPathChange();
+    },
+    onPathChange: function onPathChange() {
+      //Updated onPathChange
+      var path = location.pathname;
+      var qs = Qs.parse(location.search.slice(1));
+      var cookies = Cookie.parse(document.cookie);
+      inferPropsChange(path, qs, cookies).then( //inferPropsChange download the new props if the url query changed as done previously
+      function () {
+        Link.renderFunc(React.createElement(Child, browserState)); //if we are on server side we render 
+      }, function (_ref) {
+        var http_code = _ref.http_code;
 
+        Link.renderFunc(React.createElement(ErrorPage, { message: "Not Found", code: http_code }), http_code); //idem
+      });
+    },
+
+    LinkTo: function LinkTo(route, params, query) {
+      var qs = Qs.stringify(query);
+      return routes[route].path(params) + (qs == '' ? '' : '?' + qs);
+    }
+  },
+  onClick: function onClick(ev) {
+    ev.preventDefault();
+    Link.GoTo(this.props.to, this.props.params, this.props.query);
+  },
+  render: function render() {
+    //render a <Link> this way transform link into href path which allows on browser without javascript to work perfectly on the website
+    return React.createElement(
+      'a',
+      { href: Link.LinkTo(this.props.to, this.props.params, this.props.query), onClick: this.onClick },
+      this.props.children
+    );
+  }
+});
+
+function inferPropsChange(path, query, cookies) {
+  // the second part of the onPathChange function have been moved here
   browserState = _extends({}, browserState, {
-    path: path,
-    qs: qs,
-    cookie: cookies
+    path: path, qs: query,
+    Link: Link,
+    Child: Child
   });
 
   var route, routeProps;
-  //We try to match the requested path to one our our routes
   for (var key in routes) {
-    routeProps = routes[key].match(path, qs);
+    routeProps = routes[key].match(path, query);
     if (routeProps) {
       route = key;
       break;
     }
   }
+
+  if (!route) {
+    return new Promise(function (res, reject) {
+      return reject({ http_code: 404 });
+    });
+  }
   browserState = _extends({}, browserState, routeProps, {
     route: route
   });
 
-  addRemoteProps(browserState).then(function (props) {
-    console.log("adding remote props");
+  return addRemoteProps(browserState).then(function (props) {
     browserState = props;
-    //Log our new browserState
-    //Render our components using our remote data
-    ReactDOM.render(React.createElement(Child, browserState), document.getElementById('root'));
-  }, function (res) {
-    ReactDOM.render(React.createElement(ErrorPage, { message: "Shit happened", code: res.http_code }), document.getElementById('root'));
   });
-
-  //If we don't have a match, we render an Error component
-  if (!route) return ReactDOM.render(React.createElement(ErrorPage, { message: "Not Found", code: 404 }), document.getElementById('root'));
-  ReactDOM.render(React.createElement(Child, browserState), document.getElementById('root'));
 }
 
-window.addEventListener("popstate", function () {
-  onPathChange();
-});
-onPathChange();
+module.exports = {
+  reaxt_server_render: function reaxt_server_render(params, render) {
+    inferPropsChange(params.path, params.query, params.cookies).then(function () {
+      render(React.createElement(Child, browserState));
+    }, function (err) {
+      render(React.createElement(ErrorPage, { message: "Not Found :" + err.url, code: err.http_code }), err.http_code);
+    });
+  },
+  reaxt_client_render: function reaxt_client_render(initialProps, render) {
+    browserState = initialProps;
+    Link.renderFunc = render;
+    window.addEventListener("popstate", function () {
+      Link.onPathChange();
+    });
+    Link.onPathChange();
+  }
+};
 
 /* required css for our application */
-__webpack_require__(232);
 
 /***/ }),
 /* 89 */
@@ -11571,7 +11603,7 @@ var ReactBrowserEventEmitter = __webpack_require__(29);
 var ReactCurrentOwner = __webpack_require__(11);
 var ReactDOMComponentTree = __webpack_require__(4);
 var ReactDOMContainerInfo = __webpack_require__(85);
-var ReactDOMFeatureFlags = __webpack_require__(201);
+var ReactDOMFeatureFlags = __webpack_require__(198);
 var ReactFeatureFlags = __webpack_require__(58);
 var ReactInstanceMap = __webpack_require__(23);
 var ReactInstrumentation = __webpack_require__(7);
@@ -23812,40 +23844,16 @@ webpackContext.id = 195;
 
 /***/ }),
 /* 196 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "index.html");
-
-/***/ }),
-/* 197 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "orders.html");
-
-/***/ }),
-/* 198 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony default export */ __webpack_exports__["default"] = (__webpack_require__.p + "order_details.html");
-
-/***/ }),
-/* 199 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-module.exports = __webpack_require__(200);
+module.exports = __webpack_require__(197);
 
 
 /***/ }),
-/* 200 */
+/* 197 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23868,9 +23876,9 @@ var ReactReconciler = __webpack_require__(15);
 var ReactUpdates = __webpack_require__(9);
 var ReactVersion = __webpack_require__(87);
 
-var findDOMNode = __webpack_require__(202);
+var findDOMNode = __webpack_require__(199);
 var getHostComponentFromComposite = __webpack_require__(90);
-var renderSubtreeIntoContainer = __webpack_require__(203);
+var renderSubtreeIntoContainer = __webpack_require__(200);
 var warning = __webpack_require__(1);
 
 ReactDefaultInjection.inject();
@@ -23947,9 +23955,9 @@ if (process.env.NODE_ENV !== 'production') {
 
 if (process.env.NODE_ENV !== 'production') {
   var ReactInstrumentation = __webpack_require__(7);
-  var ReactDOMUnknownPropertyHook = __webpack_require__(204);
-  var ReactDOMNullInputValuePropHook = __webpack_require__(205);
-  var ReactDOMInvalidARIAHook = __webpack_require__(206);
+  var ReactDOMUnknownPropertyHook = __webpack_require__(201);
+  var ReactDOMNullInputValuePropHook = __webpack_require__(202);
+  var ReactDOMInvalidARIAHook = __webpack_require__(203);
 
   ReactInstrumentation.debugTool.addHook(ReactDOMUnknownPropertyHook);
   ReactInstrumentation.debugTool.addHook(ReactDOMNullInputValuePropHook);
@@ -23959,7 +23967,7 @@ if (process.env.NODE_ENV !== 'production') {
 module.exports = ReactDOM;
 
 /***/ }),
-/* 201 */
+/* 198 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23981,7 +23989,7 @@ var ReactDOMFeatureFlags = {
 module.exports = ReactDOMFeatureFlags;
 
 /***/ }),
-/* 202 */
+/* 199 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24044,7 +24052,7 @@ function findDOMNode(componentOrElement) {
 module.exports = findDOMNode;
 
 /***/ }),
-/* 203 */
+/* 200 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24063,7 +24071,7 @@ var ReactMount = __webpack_require__(89);
 module.exports = ReactMount.renderSubtreeIntoContainer;
 
 /***/ }),
-/* 204 */
+/* 201 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24178,7 +24186,7 @@ var ReactDOMUnknownPropertyHook = {
 module.exports = ReactDOMUnknownPropertyHook;
 
 /***/ }),
-/* 205 */
+/* 202 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24224,7 +24232,7 @@ var ReactDOMNullInputValuePropHook = {
 module.exports = ReactDOMNullInputValuePropHook;
 
 /***/ }),
-/* 206 */
+/* 203 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24320,20 +24328,20 @@ var ReactDOMInvalidARIAHook = {
 module.exports = ReactDOMInvalidARIAHook;
 
 /***/ }),
-/* 207 */
+/* 204 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(208);
+module.exports = __webpack_require__(205);
 
 
 /***/ }),
-/* 208 */
+/* 205 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Load modules
 
-var Stringify = __webpack_require__(209);
-var Parse = __webpack_require__(210);
+var Stringify = __webpack_require__(206);
+var Parse = __webpack_require__(207);
 
 
 // Declare internals
@@ -24348,7 +24356,7 @@ module.exports = {
 
 
 /***/ }),
-/* 209 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Load modules
@@ -24431,7 +24439,7 @@ module.exports = function (obj, options) {
 
 
 /***/ }),
-/* 210 */
+/* 207 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Load modules
@@ -24594,7 +24602,7 @@ module.exports = function (str, options) {
 
 
 /***/ }),
-/* 211 */
+/* 208 */
 /***/ (function(module, exports) {
 
 
@@ -24675,7 +24683,16 @@ module.exports.parse = parse;
 
 
 /***/ }),
-/* 212 */
+/* 209 */
+/***/ (function(module, exports) {
+
+module.exports = (typeof window !== 'undefined')
+                 ? window.global_reaxt_config
+                 : global.global_reaxt_config
+
+
+/***/ }),
+/* 210 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -24689,22 +24706,22 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 (function(define) { 'use strict';
 !(__WEBPACK_AMD_DEFINE_RESULT__ = function (require) {
 
-	var timed = __webpack_require__(213);
-	var array = __webpack_require__(214);
-	var flow = __webpack_require__(215);
-	var fold = __webpack_require__(216);
-	var inspect = __webpack_require__(217);
-	var generate = __webpack_require__(218);
-	var progress = __webpack_require__(219);
-	var withThis = __webpack_require__(220);
-	var unhandledRejection = __webpack_require__(221);
+	var timed = __webpack_require__(211);
+	var array = __webpack_require__(212);
+	var flow = __webpack_require__(213);
+	var fold = __webpack_require__(214);
+	var inspect = __webpack_require__(215);
+	var generate = __webpack_require__(216);
+	var progress = __webpack_require__(217);
+	var withThis = __webpack_require__(218);
+	var unhandledRejection = __webpack_require__(219);
 	var TimeoutError = __webpack_require__(93);
 
 	var Promise = [array, flow, fold, generate, progress,
 		inspect, withThis, timed, unhandledRejection]
 		.reduce(function(Promise, feature) {
 			return feature(Promise);
-		}, __webpack_require__(223));
+		}, __webpack_require__(221));
 
 	var apply = __webpack_require__(95)(Promise);
 
@@ -24910,7 +24927,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 213 */
+/* 211 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -24995,7 +25012,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 214 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25301,7 +25318,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 215 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25468,7 +25485,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 216 */
+/* 214 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25502,7 +25519,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 217 */
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25529,7 +25546,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 218 */
+/* 216 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25601,7 +25618,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 219 */
+/* 217 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25632,7 +25649,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 220 */
+/* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25677,7 +25694,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 221 */
+/* 219 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25688,7 +25705,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 !(__WEBPACK_AMD_DEFINE_RESULT__ = function(require) {
 
 	var setTimer = __webpack_require__(50).setTimer;
-	var format = __webpack_require__(222);
+	var format = __webpack_require__(220);
 
 	return function unhandledRejection(Promise) {
 
@@ -25770,7 +25787,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 222 */
+/* 220 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25833,7 +25850,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 223 */
+/* 221 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -25843,8 +25860,8 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 (function(define) { 'use strict';
 !(__WEBPACK_AMD_DEFINE_RESULT__ = function (require) {
 
-	var makePromise = __webpack_require__(224);
-	var Scheduler = __webpack_require__(225);
+	var makePromise = __webpack_require__(222);
+	var Scheduler = __webpack_require__(223);
 	var async = __webpack_require__(50).asap;
 
 	return makePromise({
@@ -25857,7 +25874,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 224 */
+/* 222 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -26819,7 +26836,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 225 */
+/* 223 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-2014 original author or authors */
@@ -26906,7 +26923,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 226 */
+/* 224 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.2
@@ -26981,13 +26998,13 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
   })();
 
-  http = __webpack_require__(227);
+  http = __webpack_require__(225);
 
-  https = __webpack_require__(228);
+  https = __webpack_require__(226);
 
-  os = __webpack_require__(229);
+  os = __webpack_require__(227);
 
-  url = __webpack_require__(230);
+  url = __webpack_require__(228);
 
   XMLHttpRequest = (function(superClass) {
     extend(XMLHttpRequest, superClass);
@@ -27787,31 +27804,31 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/** @license MIT License (c) copyright 2010-20
 
 
 /***/ }),
-/* 227 */
+/* 225 */
 /***/ (function(module, exports) {
 
 module.exports = require("http");
 
 /***/ }),
-/* 228 */
+/* 226 */
 /***/ (function(module, exports) {
 
 module.exports = require("https");
 
 /***/ }),
-/* 229 */
+/* 227 */
 /***/ (function(module, exports) {
 
 module.exports = require("os");
 
 /***/ }),
-/* 230 */
+/* 228 */
 /***/ (function(module, exports) {
 
 module.exports = require("url");
 
 /***/ }),
-/* 231 */
+/* 229 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27846,7 +27863,7 @@ module.exports = factory(
 
 
 /***/ }),
-/* 232 */
+/* 230 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin

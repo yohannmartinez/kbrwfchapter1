@@ -19,20 +19,14 @@ defmodule KbrwFormation.Database do
 
 
   def get(key) do
-    case :ets.lookup(:wrapper, key) do
-      [] ->
-        []
-
-      [{key, value}] ->
-        value
-    end
+    KbrwFormation.Riak.getObject("orders", key)
   end
 
   def getAll(searchParams) do
     query = Enum.filter(searchParams, fn{key,_value} -> key !== "rows" && key !== "page" && key !== "sort" end) |> Enum.map(fn{key, val} -> "#{key}:%22#{val}%22" end) |> Enum.join("%20AND%20")
     case query do
-      "" -> KbrwFormation.Riak.search("orders", "_yz_rb:%22orders%22",  String.to_integer(searchParams["page"]), String.to_integer(searchParams["rows"]), searchParams["sort"])
-      _ -> KbrwFormation.Riak.search("orders", query,  String.to_integer(searchParams["page"]), String.to_integer(searchParams["rows"]), searchParams["sort"])
+      "" -> KbrwFormation.Riak.search("orders_bucket", "_yz_rb:%22orders_bucket%22",  String.to_integer(searchParams["page"]), String.to_integer(searchParams["rows"]), searchParams["sort"])
+      _ -> KbrwFormation.Riak.search("orders_bucket", query,  String.to_integer(searchParams["page"]), String.to_integer(searchParams["rows"]), searchParams["sort"])
     end
 
   end

@@ -22,12 +22,12 @@ defmodule KbrwFormation.Riak do
   def getKeys(bucket) do
     {:ok, {{'HTTP/1.1', 200, 'OK'}, _headers, body}} =
       :httpc.request(:get, {'http://127.0.0.1:8098/buckets/#{bucket}/keys?keys=true', []}, [], [])
-
-    Poison.decode!(body)
+    keys = Poison.decode!(body)
+    keys["keys"]
   end
 
   def getObject(bucket, key) do
-    {:ok, {{'HTTP/1.1', 200, 'OK'}, _headers, body}} =
+    {:ok, {_status, _headers, body}} =
       :httpc.request(:get, {'http://127.0.0.1:8098/buckets/#{bucket}/keys/#{key}', []}, [], [])
 
     Poison.decode!(body)
@@ -54,6 +54,7 @@ defmodule KbrwFormation.Riak do
 
   def uploadSchema(schemaName, schemaLink) do
     schema = File.read!(schemaLink)
+    # :httpc.request(:get, {'http://127.0.0.1:8098/search/schema/orders', []},[],[])
 
     :httpc.request(
       :put,
@@ -113,9 +114,32 @@ defmodule KbrwFormation.Riak do
   end
 
   def search(index, query, page \\ 0, rows \\ 30 , sort \\ "creation_date_index") do
-    IO.inspect(query)
     #exemple of query with all parameters http://127.0.0.1:8098/search/query/orders/?wt=json&q=type:%22nat_order%22&rows=30&start=90&sort=_yz_rk%20desc
     {:ok, {_status, _headers, body}} = :httpc.request(:get, {'http://127.0.0.1:8098/search/query/#{index}/?wt=json&q=#{query}&rows=#{rows}&start=#{page * rows}&sort=#{sort}%20desc', []}, [], [])
     Poison.decode!(body)
   end
+
+  def reindexObjects(bucket) do 
+    KbrwFormation.Riak.getKeys(bucket)
+      |> Enum.map(
+        fn key ->
+          object = KbrwFormation.Riak.getObject("orders", key)
+          newStatus = %{object["status"] | "state" => "init"}
+          newObject = %{object | "status" => newStatus}
+          newObject["status"]["state"]
+          KbrwFormation.Riak.addToBucket("orders", key, Poison.encode!(newObject))
+        end)
+    end 
+
+  def initialize_commands(bucket) do 
+    KbrwFormation.Riak.getKeys(bucket)
+      |> Enum.map(
+        fn key ->
+          object = KbrwFormation.Riak.getObject(bucket, key)
+          newStatus = %{object["status"] | "state" => "init"}
+          newObject = %{object | "status" => newStatus}
+          finalObject = Map.put(newObject, "payment_method", "paypal")
+          KbrwFormation.Riak.addToBucket(bucket, key, Poison.encode!(finalObject))
+        end)
+    end 
 end

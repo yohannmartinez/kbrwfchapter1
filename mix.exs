@@ -17,7 +17,7 @@ defmodule KbrwFormation.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     [
-      applications: [:logger, :cowboy, :plug, :inets, :reaxt],
+      applications: [:reaxt, :logger, :cowboy, :plug, :inets],
       mod: {KbrwFormation, []}
     ]
   end
@@ -37,6 +37,9 @@ defmodule KbrwFormation.Mixfile do
       {:cowboy, "~> 1.0.0"},
       {:plug, "~> 1.3.4"},      
       {:reaxt, github: "kbrw/reaxt", tag: "2.1.0"},
+      {:rulex, git: "https://github.com/kbrw/rulex.git"},
+      {:exfsm, git: "https://github.com/kbrw/exfsm.git"},
+      {:ewebmachine, "2.2.0"},
     ]
   end
 end
